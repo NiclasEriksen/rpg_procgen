@@ -1,0 +1,4 @@
+14:12:22,621 __main__ DEBUG Creating OpenGL context
+14:12:22,623 __main__ DEBUG Subclassing pyglet window, setting parameters.
+14:12:22,628 __main__ DEBUG Not fullscreen, setting screen resolution to 1440x900.
+14:12:22,628 __main__ DEBUG Centering window on screen.

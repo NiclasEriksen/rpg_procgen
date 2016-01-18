@@ -1,0 +1,53 @@
+# Animations!
+import os
+# import logging
+from pyglet import image, sprite
+
+
+class Animator:
+
+    def __init__(self, res_path):
+        self.animations = dict()
+        self.animpath = os.path.join(res_path, "animations")
+        self.load()
+        # print(self.animations)
+
+    def load(self):
+        directories = []
+        paths = []
+        for (dirpath, dirnames, filenames) in os.walk(self.animpath):
+            directories = dirnames
+            break
+
+        for directory in directories:
+            # print(directory)
+            paths.append(directory)
+
+        print(paths)
+
+        if len(paths) > 0:
+            for path in paths:
+                name = path
+                image_frames = []
+                for (dp, dn, files) in os.walk(os.path.join(self.animpath, path)):
+                    for f in files:
+                        image_frames.append(os.path.join(self.animpath, path, f))
+                    break
+
+                # print(image_frames)
+                image_frames.sort()
+                # print(image_frames)
+                images = []
+                for f in image_frames:
+                    images.append(image.load(f))
+                # images = map(
+                #     lambda img: image.load(img),
+                #     image_frames
+                # )
+
+                animation = image.Animation.from_image_sequence(
+                    images, 1 / 30, False
+                )
+
+                animSprite = sprite.Sprite(animation, x=50, y=50)
+                self.animations[name] = animSprite

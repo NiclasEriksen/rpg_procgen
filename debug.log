@@ -1,0 +1,77 @@
+03:49:56,96 __main__ DEBUG Importing game modules...
+03:49:56,118 __main__ DEBUG Done.
+03:49:56,119 __main__ DEBUG Creating OpenGL context
+03:49:56,121 __main__ DEBUG Subclassing pyglet window, setting parameters.
+03:49:56,126 __main__ DEBUG Not fullscreen, setting screen resolution to 1440x900.
+03:49:56,126 __main__ DEBUG Centering window on screen.
+03:49:56,128 __main__ DEBUG Loading textures from folder "resources".
+03:49:56,128 __main__ INFO Loading textures...
+03:49:56,138 __main__ INFO Done, 9 textures loaded.
+03:49:56,138 __main__ INFO Loading animations...
+03:49:56,526 __main__ INFO Finished loading 14 animations.
+03:49:56,526 __main__ INFO Loading player animations...
+03:49:56,528 __main__ INFO Finished loading player animations.
+03:49:56,542 __main__ ERROR No map files found!
+03:49:56,542 __main__ INFO Starting new game...
+03:49:56,543 __main__ ERROR No such dungeon config item: enemy_lvl_range
+03:49:56,543 __main__ ERROR No such dungeon config item: lvl_req
+03:49:56,543 __main__ ERROR No such dungeon config item: loot_ilvl_range
+03:49:56,543 __main__ INFO Generating dungeon of size 70 by 60 squares...
+03:49:56,549 __main__ WARNING Failed to add more rooms
+03:49:56,550 __main__ DEBUG Room not suitable for pillars.
+03:49:56,550 __main__ DEBUG Room not suitable for pillars.
+03:49:56,550 __main__ DEBUG Room not suitable for pillars.
+03:49:56,550 __main__ DEBUG Room not suitable for pillars.
+03:49:56,715 __main__ INFO Done, 14 rooms added.
+03:49:56,725 __main__ INFO Generating dungeon graphics...
+03:49:58,54 PIL.PngImagePlugin DEBUG STREAM b'IHDR' 16 13
+03:49:58,55 PIL.PngImagePlugin DEBUG STREAM b'bKGD' 41 6
+03:49:58,55 PIL.PngImagePlugin DEBUG b'bKGD' 41 6 (unknown)
+03:49:58,55 PIL.PngImagePlugin DEBUG STREAM b'pHYs' 59 9
+03:49:58,55 PIL.PngImagePlugin DEBUG STREAM b'tIME' 80 7
+03:49:58,55 PIL.PngImagePlugin DEBUG b'tIME' 80 7 (unknown)
+03:49:58,55 PIL.PngImagePlugin DEBUG STREAM b'IDAT' 99 8192
+03:49:58,55 PIL.PngImagePlugin DEBUG STREAM b'IHDR' 16 13
+03:49:58,55 PIL.PngImagePlugin DEBUG STREAM b'bKGD' 41 6
+03:49:58,56 PIL.PngImagePlugin DEBUG b'bKGD' 41 6 (unknown)
+03:49:58,56 PIL.PngImagePlugin DEBUG STREAM b'pHYs' 59 9
+03:49:58,56 PIL.PngImagePlugin DEBUG STREAM b'tIME' 80 7
+03:49:58,56 PIL.PngImagePlugin DEBUG b'tIME' 80 7 (unknown)
+03:49:58,56 PIL.PngImagePlugin DEBUG STREAM b'IDAT' 99 8192
+03:49:58,881 __main__ INFO Done.
+03:49:58,881 __main__ INFO Spawning player...
+03:49:58,881 root DEBUG Adding sprite to player.
+03:49:58,883 root DEBUG Player hp, mana and stamina restored to full status.
+03:49:58,883 __main__ INFO Done.
+03:49:58,983 root DEBUG Player equipped item Shitty Sword 1 in slot weapon_l.
+03:49:58,983 root DEBUG Player equipped item Shitty Armor 1 in slot torso.
+03:49:58,983 root DEBUG Player equipped item Shitty Ring 1 in slot acc_1.
+03:49:58,983 root DEBUG Player hp, mana and stamina restored to full status.
+03:49:58,984 __main__ INFO Spawning enemies...
+03:49:58,984 root DEBUG Adding sprite to enemy.
+03:49:58,985 root DEBUG Adding sprite to enemy.
+03:49:58,987 root DEBUG Adding sprite to enemy.
+03:49:58,988 root DEBUG Adding sprite to enemy.
+03:49:58,989 root DEBUG Adding sprite to enemy.
+03:49:58,991 root DEBUG Adding sprite to enemy.
+03:49:58,992 root DEBUG Adding sprite to enemy.
+03:49:58,994 root DEBUG Adding sprite to enemy.
+03:49:58,995 root DEBUG Adding sprite to enemy.
+03:49:58,996 root DEBUG Adding sprite to enemy.
+03:49:58,997 root DEBUG Adding sprite to enemy.
+03:49:58,998 root DEBUG Adding sprite to enemy.
+03:49:58,999 root DEBUG Adding sprite to enemy.
+03:49:59,0 root DEBUG Adding sprite to enemy.
+03:49:59,1 root DEBUG Adding sprite to enemy.
+03:49:59,2 root DEBUG Adding sprite to enemy.
+03:49:59,3 root DEBUG Adding sprite to enemy.
+03:49:59,4 root DEBUG Adding sprite to enemy.
+03:49:59,5 root DEBUG Adding sprite to enemy.
+03:49:59,7 root DEBUG Adding sprite to enemy.
+03:49:59,8 root DEBUG Adding sprite to enemy.
+03:49:59,9 root DEBUG Adding sprite to enemy.
+03:49:59,10 root DEBUG Adding sprite to enemy.
+03:49:59,12 root DEBUG Adding sprite to enemy.
+03:49:59,13 __main__ INFO Done.
+03:49:59,13 __main__ INFO Game successfully loaded.
+03:50:00,343 __main__ INFO Exiting...
