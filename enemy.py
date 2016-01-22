@@ -3,6 +3,7 @@ import pyglet
 from functions import *
 from load_config import ConfigSectionMap as load_cfg
 from actor import Actor
+from zsprite import ZSprite
 
 
 class Enemy(Actor):
@@ -13,7 +14,7 @@ class Enemy(Actor):
     ):
         super().__init__()
         self.game = game
-        self.x, self.y = x, y
+        self.x, self.y, self.z = x, y, y
         self.rectangle = create_rectangle(x, y, 32, 32)
         self.hash_position = self.game.spatial_hash.insert_object_for_point(
             (self.x, self.y), self
@@ -21,12 +22,14 @@ class Enemy(Actor):
         if window:
             logging.debug("Adding sprite to enemy.")
             self.window = window
+            sx, sy = self.window.get_windowpos(x, y)
             self.sprite = pyglet.sprite.Sprite(
                 window.textures["player"],
-                x=self.x, y=self.y,
-                batch=window.batches["creatures"], group=window.bg_group,
+                x=sx, y=sy,
+                batch=window.batches["creatures"],
                 subpixel=True
             )
+            # print(self.sprite.image.z)
         else:
             logging.info("No window specified, not adding sprite to enemy.")
         if modifiers:
@@ -42,6 +45,9 @@ class Enemy(Actor):
         self.base_stats = load_cfg("EnemyBaseStats")
 
         self.active_effects = []
+
+        self.auto_attack_target = None
+        self.attack_cd = 0
 
         self.hp = self.max_hp = self.base_stats["hp"]
         self.mp = self.max_mp = self.base_stats["mp"]
@@ -68,6 +74,43 @@ class Enemy(Actor):
     def get_stat(self, stat):
         return self.base_stats[stat]
 
+    def auto_attack(self, dt):
+        t = self.auto_attack_target
+        if self.attack_cd <= 0:
+            if t:
+                dist = get_dist(self.x, self.y, t.x, t.y)
+                attack_range = self.base_stats["arng"]
+                if dist <= attack_range:
+                    # angle = math.degrees(
+                    #     get_angle(self.x, self.y, t.x, t.y)
+                    # )
+                    # if (
+                    #     self.angle >= angle - 45 and
+                    #     self.angle <= angle + 45
+                    # ):
+                    self.attack(t)
+                    self.attack_cd = self.base_stats["aspd"]
+        else:
+            self.attack_cd -= dt
+
+    def attack(self, t):
+        # attack_effects = self.attack_effects.copy()
+        # attack_effects["dmg"] = self.stats.get("dmg")
+        # attack_effects["crit"] = self.stats.get("crit")
+        # result = t.do_effect(attack_effects)
+        # self.attack_fx(t)
+        # if result["crit"]:
+        #     force = 100
+        # else:
+        t.hp -= self.base_stats["dmg"]
+        force = 40
+        vec = ((t.x - self.x), (t.y - self.y))
+        force_x = force_y = force
+        force_x -= abs(vec[0])
+        force_y -= abs(vec[1])
+        force_vec = (vec[0] * force_x), (vec[1] * force_y)
+        t.body.apply_impulse(force_vec)
+
     def update_stats(self, update_ui=False):
         bs = self.base_stats
         m = self.modifiers
@@ -87,7 +130,7 @@ class Enemy(Actor):
         else:
             return False
 
-    def do_effect(self, effects):
+    def do_effect(self, effects, origin=None):
         # print(effects)
         if effects["dmg"]:
             crit = False
@@ -137,9 +180,11 @@ class Enemy(Actor):
                         aoe_e.do_effect(effects_aoe)
                         logging.debug("AOE hit target!")
         if effects["dot"]:
-            effects["dot"](self, dmg=effects["dot_dmg"])
+            effects["dot"](self, dmg=effects["dot_dmg"], origin=origin)
 
         if self.hp <= 0:
+            if origin:
+                origin.award_kill(xp=10)
             self.die()
 
         return dict(
@@ -175,6 +220,7 @@ class Enemy(Actor):
             for e in self.active_effects:
                 e.update(dt)
             self.brain.update()
+            self.auto_attack(dt)
             oldx, oldy = self.x, self.y
             self.x, self.y = self.body.position
             if not (self.x == oldx) or not (self.y == oldy):
@@ -182,9 +228,16 @@ class Enemy(Actor):
                 self.hash_position = self.game.spatial_hash.insert_object_for_point(
                     (self.x, self.y), self
                 )
+                # self.sprite._set_z(-int(self.y))
+                # self.sprite._set_z(-(self.sprite.y))
+                # self.sprite.z = int(self.window.height - self.sprite.y) // 8
+                # newgroup = pyglet.graphics.OrderedGroup(self.hash_position[1])
+                # if not self.sprite.group == newgroup:
+                #     self.sprite.group = newgroup
             newpos = self.window.get_windowpos(
                 self.x, self.y + self.sprite.height // 3, precise=True
             )
             self.rectangle = create_rectangle(self.x, self.y, 32, 32)
             # print(newpos)
             self.sprite.x, self.sprite.y = newpos
+            #print(self.sprite.z)

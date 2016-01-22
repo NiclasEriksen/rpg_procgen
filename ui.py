@@ -25,6 +25,7 @@ class UI:
         self.redraw_timer = self.settings["redraw_time"]
         self.bg_batch = self.window.batches["gui1"]
         self.fg_batch = self.window.batches["gui2"]
+        self.bar_fg_batch = self.window.batches["gui3"]
         self.behind_batch = self.window.batches["gui0"]
 
     def add_button(
@@ -45,7 +46,7 @@ class UI:
             self.window,
             x=x, y=y,
             text=text, w=width, h=height, c=color, s=shows,
-            bg_batch=self.bg_batch, fg_batch=self.fg_batch
+            bg_batch=self.bg_batch, fg_batch=self.bar_fg_batch
         )
         self.bars.append(bar)
 
@@ -185,6 +186,13 @@ class UI:
                 if self.target_label:
                     self.target_label = None
 
+        else:
+            for b in self.progressbars:
+                b.label.delete()
+                if hasattr(b, "title"):
+                    b.title.delete()
+            self.progressbars = []
+
         for ct in self.combat_text:
             ct.update(dt)
 
@@ -216,8 +224,10 @@ class UI:
         # for b in self.buttons:
         #     b.draw()
         self.bg_batch.draw()
-        for b in self.bars:
-            b.draw()
+        if self.window.game.player:
+            for b in self.bars:
+                b.draw()
+            self.bar_fg_batch.draw()
         if self.stats:
             self.stats.draw()
         for b in self.progressbars:

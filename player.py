@@ -5,9 +5,9 @@ import os
 import glob
 import math
 from functions import *
-from actor import Actor
+from actor import Actor, Hand
 from stats import StatSystem
-from animations import HandAnimAttack, HeadBobbing
+from animations import HandAnimAttack, HeadBobbing, Pulse
 from load_config import ConfigSectionMap as load_cfg
 import abilities
 ROOT = os.path.dirname(__file__)
@@ -37,23 +37,40 @@ class Player(Actor):
             self.sprite = pyglet.sprite.Sprite(
                 window.textures["player_body"],
                 x=window.width // 2, y=window.height // 2,
+                batch=window.batches["creatures"], group=window.fg_group
+            )
+            self.glow = pyglet.sprite.Sprite(
+                window.textures["player_body_glow"],
+                x=window.width // 2, y=window.height // 2,
                 batch=window.batches["creatures"], group=window.mid_group
             )
-            self.lhand_sprite = pyglet.sprite.Sprite(
-                window.textures["player_hand"],
-                x=window.width // 2 + 10, y=window.height // 2 + 8,
-                batch=window.batches["creatures"], group=window.bg_group
-            )
-            self.rhand_sprite = pyglet.sprite.Sprite(
-                window.textures["player_hand"],
-                x=window.width // 2 - 10, y=window.height // 2 + 8,
-                batch=window.batches["creatures"], group=window.bg_group
-            )
-            # self.window.set_offset(*self.windowpos)
+            self.glow.color = (255, 255, 255)
+            self.glow.opacity = 0
         else:
             logging.info("No window specified, not adding sprite to player.")
 
-        # print(self.sprite.offset)
+        self.limbs = dict(
+            left=Hand(
+                self, (-10, 8), window.textures["player_hand"],
+                glow_texture=window.textures["player_hand_glow"],
+                glow_color=(20, 160, 120)
+            ),
+            right=Hand(
+                self, (10, 8), window.textures["player_hand"],
+                glow_texture=window.textures["player_hand_glow"],
+                glow_color=(175, 50, 110)
+            )
+        )
+        self.child_objects.append(Pulse(self.limbs["right"].glow))
+        self.child_objects.append(
+            Pulse(self.limbs["left"].glow, frequency=0.3)
+        )
+        self.child_objects.append(
+            Pulse(
+                self.glow, frequency=2.5,
+                max_opacity=0.3, min_scale=0.8, max_scale=1.3
+            )
+        )
 
         self.action = None
         self.actions = dict(
@@ -118,6 +135,7 @@ class Player(Actor):
         self.hp = self.max_hp = self.base_stats["hp"]
         self.mp = self.max_mp = self.base_stats["mp"]
         self.sta = self.max_sta = self.base_stats["sta"]
+        self.xp = 0
         self.attack_cd = 0
 
         self.update_stats()
@@ -125,6 +143,13 @@ class Player(Actor):
 
     def get_windowpos(self):
         return self.windowpos
+
+    def award_kill(self, xp=0, gold=0):
+        if xp:
+            self.xp += xp
+            print(self.xp)
+        if gold:
+            pass
 
     def levelup(self, attribute=None):
         if not attribute:   # If no attribute given, assign random upgrade
@@ -307,10 +332,10 @@ class Player(Actor):
                     angle = math.degrees(
                         get_angle(self.x, self.y, t.x, t.y)
                     )
-                    if (
-                        self.angle >= angle - 45 and
-                        self.angle <= angle + 45
-                    ):
+                    anglediff = (
+                        (self.angle - angle + 180) % 360 - 180
+                    )
+                    if anglediff <= 45 and anglediff >= -45:
                         self.attack(t)
                         self.attack_cd = self.stats.get("aspd")
         else:
@@ -320,7 +345,7 @@ class Player(Actor):
         attack_effects = self.attack_effects.copy()
         attack_effects["dmg"] = self.stats.get("dmg")
         attack_effects["crit"] = self.stats.get("crit")
-        result = t.do_effect(attack_effects)
+        result = t.do_effect(attack_effects, origin=self)
         self.attack_fx(t)
         if result["crit"]:
             force = 100
@@ -388,43 +413,24 @@ class Player(Actor):
             else:
                 self.actions["sprint"] = False
 
-    def die(self):
-        logging.info("Player died!")
-
-    def update(self, dt):
-        self.move(dt)
-        if self.actions["movement"] and self.cast_object:
-            self.cast_object = None
-            logging.info("Cast interrupted by movement.")
-        self.auto_attack(dt)
-        self.update_regen(dt)
-        self.update_degen(dt)
-        self.update_stats()
-        for o in self.child_objects:
-            try:
-                o.update(dt)
-            except Exception as e:
-                logging.error(e)
-        if self.cast_object:
-            self.cast_object.update(dt)
+    def update_body(self):
         angle = get_angle(self.sprite.x, self.sprite.y, *self.window.mouse_pos)
         self.angle = math.degrees(angle)
-        self.lhand_sprite.x, self.lhand_sprite.y = rotate2d(
-            -angle, (
-                self.sprite.x + 8 + self.lhand_offset[1],
-                self.sprite.y + 12 + self.lhand_offset[0]
-            ),
-            (self.sprite.x, self.sprite.y)
-        )
-        self.rhand_sprite.x, self.rhand_sprite.y = rotate2d(
-            -angle, (
-                self.sprite.x + 8 + self.rhand_offset[1],
-                self.sprite.y - 12 + self.rhand_offset[0]
-            ),
-            (self.sprite.x, self.sprite.y)
-        )
-        self.lhand_sprite.rotation = self.angle + 90
-        self.rhand_sprite.rotation = self.angle + 90
+        for key, limb in self.limbs.items():
+            limb.update_pos()
+
+        # self.rhand_sprite.x, self.rhand_sprite.y = rotate2d(
+        #     -angle, (
+        #         self.sprite.x + 8 + self.rhand_offset[1],
+        #         self.sprite.y - 12 + self.rhand_offset[0]
+        #     ),
+        #     (self.sprite.x, self.sprite.y)
+        # )
+        # self.rhand_glow.x, self.rhand_glow.y = (
+        #     self.rhand_sprite.x, self.rhand_sprite.y
+        # )
+        # self.rhand_sprite.rotation = self.angle + 90
+        # self.rhand_glow.rotation = self.angle + 90
         self.sprite.x, self.sprite.y = rotate2d(
             math.radians(self.angle + 90), (
                 self.windowpos[0] + self.body_offset[0],
@@ -433,6 +439,48 @@ class Player(Actor):
             self.windowpos
         )
         self.sprite.rotation = self.angle + 90
+        self.glow.x, self.glow.y = self.sprite.x, self.sprite.y
+        self.glow.rotation = self.sprite.rotation
+
+    def die(self):
+        pos = self.window.get_windowpos(self.x, self.y, precise=True)
+        self.window.animator.spawn_anim("Blood Splash", pos, scale=0.8)
+        # self.active_effects = []
+        self.limbs = {}
+        self.child_objects = []
+        self.sprite.delete()
+        self.glow.delete()
+        self.remove_body()
+        self.clear_target()
+        self.clear_ability_target()
+        self.game.player = None
+        # self.sprite.visible = False
+        logging.info("Player died!")
+
+    def update(self, dt):
+        if self.hp <= 0:
+            self.die()
+        else:
+            if self.xp >= 30:
+                self.levelup()
+                self.xp = 0
+            self.move(dt)
+            if self.actions["movement"] and self.cast_object:
+                self.cast_object = None
+                logging.info("Cast interrupted by movement.")
+            self.auto_attack(dt)
+            self.update_regen(dt)
+            self.update_degen(dt)
+            self.update_stats()
+            for o in self.child_objects:
+                try:
+                    o.update(dt)
+                except Exception as e:
+                    logging.error(e)
+            if self.cast_object:
+                self.cast_object.update(dt)
+
+            self.update_body()
 
 
 class Damage:

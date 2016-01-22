@@ -16,8 +16,9 @@ class UsableAbility:
 
     """Constructor for player abilities."""
 
-    def __init__(self):
+    def __init__(self, origin=None):
         self.owner = None
+        self.origin = origin
         self.range = 0
         self.target = None
         self.cooldown_timer = 0
@@ -304,7 +305,7 @@ class Projectile:
         for e in enemies:
             if e not in self.blacklist:
                 if check_point_rectangle(self.x, self.y, e.rectangle):
-                    e.do_effect(self.target_effects)
+                    e.do_effect(self.target_effects, origin=self.owner)
                     if hasattr(self, "impact_anim"):
                         pos = self.owner.window.get_windowpos(
                             self.x, self.y, precise=True
@@ -364,8 +365,9 @@ class DoT:
 
     """Constructor for DoT (damage over time) objects"""
 
-    def __init__(self, owner, dmg, time, tick, atype="spell", dtype="none"):
+    def __init__(self, owner, dmg, time, tick, origin=None, atype="spell", dtype="none"):
         self.owner = owner
+        self.origin = origin
         self.tick = tick
         self.ability_type = atype
         self.target_effects = dict(
@@ -383,7 +385,7 @@ class DoT:
         self.target_effects["dmg"] = tick_dmg
 
     def do_effect(self):
-        self.owner.do_effect(self.target_effects)
+        self.owner.do_effect(self.target_effects, self.origin)
         if hasattr(self, "tick_effect"):
             if hasattr(self, "tick_effect_scale"):
                 scale = self.tick_effect_scale

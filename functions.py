@@ -20,7 +20,7 @@ def check_consecutive_letters(s, count):
     l = [[k, len(list(g))] for k, g in groupby(s)]
     for letter in l:
         if letter[1] >= count:
-            print(letter)
+            # print(letter)
             return True
     else:
         return False

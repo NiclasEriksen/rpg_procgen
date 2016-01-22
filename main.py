@@ -63,11 +63,15 @@ class Game:
 
         self.window.flush()
 
+        # for i in range(100):
+        #     print(str(i) + ": " + self.generate_name("surname"))
+
         dungeon_cfg = load_cfg("Dungeon2")
         self.dungeon = DungeonGenerator(
             logger,
             dungeon_cfg
         )
+
 
         self.game_size = (
             dungeon_cfg["dungeon_size"][0] * 32,
@@ -121,23 +125,7 @@ class Game:
 
         start = self.window.grid_to_window(*self.dungeon.startroom.center)
         # self.tiles = tiles.TiledRenderer(self.window, level)
-        logger.info("Spawning player...")
-        self.player = Mage(
-            self, window=self.window,
-            x=start[0], y=start[1]
-        )
-
-        # Player body for physics
-        inertia = pymunk.moment_for_circle(10, 0, 12, (0, 0))
-        body = pymunk.Body(10, inertia)
-        body.position = (self.player.x, self.player.y)
-        shape = pymunk.Circle(body, 12, (0, 0))
-        shape.elasticity = 0.2
-        # shape.collision_type = 1
-        shape.group = 0
-        self.space.add(body, shape)
-        self.player.body = body
-        logger.info("Done.")
+        self.spawn_player(start)
 
         # Add a static square for every dungeon wall
         for w in self.dungeon.walls:
@@ -159,13 +147,6 @@ class Game:
 
         # self.space.add_collision_handler(1, 1, post_solve=smack)
         self.space.damping = 0.001
-
-        self.window.set_offset(
-            self.player.windowpos[0] - self.player.x,
-            self.player.windowpos[1] - self.player.y,
-
-        )
-        self.window.update_display_dungeon()
 
         itemlist = items.L1_Sword(), items.L1_Armor(), items.L1_Ring()
         for i in itemlist:
@@ -208,12 +189,45 @@ class Game:
         e.body = body
         self.enemies.append(e)
 
+    def spawn_player(self, point):
+        logger.info("Spawning player...")
+        self.player = Mage(
+            self, window=self.window,
+            x=point[0], y=point[1]
+        )
+
+        # Player body for physics
+        inertia = pymunk.moment_for_circle(10, 0, 12, (0, 0))
+        body = pymunk.Body(10, inertia)
+        body.position = (self.player.x, self.player.y)
+        shape = pymunk.Circle(body, 12, (0, 0))
+        shape.elasticity = 0.2
+        # shape.collision_type = 1
+        shape.group = 0
+        self.space.add(body, shape)
+        self.player.body = body
+
+        self.window.set_offset(
+            self.player.windowpos[0] - self.player.x,
+            self.player.windowpos[1] - self.player.y,
+
+        )
+        self.window.update_display_dungeon()
+
+        logger.info("Done.")
+
     def generate_name(self, type):
         syllables = load_cfg("Syllables")[type]
-        syllable_count = random.randrange(2, 5)
+        syllable_count = random.randrange(2, 4)
         surname, title_pre, title_post, i = "", "", "", 0
+        apos_used = False
         while i < syllable_count:
             syl = random.choice(syllables)
+            if i and not random.randint(0, 10) and not apos_used:
+                surname += "'"
+                apos_used = True
+            # if i and not random.randint(0, 40):
+            #     i -= 1
             if syl not in surname:
                 surname += syl
                 i += 1
@@ -250,7 +264,8 @@ class Game:
             fullname = surname.title()
 
         if check_consecutive_letters(fullname, 3):
-            self.generate_name("surname")
+            # self.generate_name("surname")
+            return "ERRORNAME LOL"
         else:
             return fullname
 
@@ -262,11 +277,12 @@ class Game:
             return False
 
     def update_z_index(self):
-        for e in self.enemies:
-            if e.y > self.player.y:
-                e.sprite.group = self.window.bg_group
-            else:
-                e.sprite.group = self.window.fg_group
+        pass
+        # for e in self.enemies:
+        #     if e.y > self.player.y:
+        #         e.sprite.group = self.window.bg_group
+        #     else:
+        #         e.sprite.group = self.window.fg_group
 
     def update(self, dt):
         for x in range(10):
@@ -318,6 +334,13 @@ class GameWindow(pyglet.window.Window):  # Main game window
             )
             self.width, self.height = self.cfg["width"], self.cfg["height"]
 
+        # pyglet.gl.glClearDepth(1.0)
+        # pyglet.gl.glViewport(0, 0, self.width, self.height)
+        # pyglet.gl.glMatrixMode(pyglet.gl.GL_PROJECTION)
+        # pyglet.gl.glLoadIdentity()
+        # pyglet.gl.glOrtho(0, self.width, 0, self.height, 0.0, 1000)
+        # pyglet.gl.glMatrixMode(pyglet.gl.GL_MODELVIEW)
+
         self.debug = False
         self.logger = logger
         self.fps_display = pyglet.clock.ClockDisplay()
@@ -335,6 +358,7 @@ class GameWindow(pyglet.window.Window):  # Main game window
         self.batches["gui0"] = pyglet.graphics.Batch()
         self.batches["gui1"] = pyglet.graphics.Batch()
         self.batches["gui2"] = pyglet.graphics.Batch()
+        self.batches["gui3"] = pyglet.graphics.Batch()
         self.flush()
 
         self.offset_x, self.offset_y = 0, 0
@@ -364,8 +388,14 @@ class GameWindow(pyglet.window.Window):  # Main game window
         player_body_img = center_image(
             pyglet.image.load(os.path.join(RES_PATH, 'player_body.png'))
         )
+        player_body_glow_img = center_image(
+            pyglet.image.load(os.path.join(RES_PATH, 'player_body_glow.png'))
+        )
         player_hand_img = center_image(
             pyglet.image.load(os.path.join(RES_PATH, 'player_hands.png'))
+        )
+        player_hand_glow_img = center_image(
+            pyglet.image.load(os.path.join(RES_PATH, 'player_hands_glow.png'))
         )
         button_img = center_image(
             pyglet.image.load(os.path.join(RES_PATH, 'button.png'))
@@ -395,7 +425,9 @@ class GameWindow(pyglet.window.Window):  # Main game window
         self.textures = dict(
             player=player_img,
             player_body=player_body_img,
+            player_body_glow=player_body_glow_img,
             player_hand=player_hand_img,
+            player_hand_glow=player_hand_glow_img,
             button=button_img,
             button_down=button_down_img,
             fireball1=fireball_s_img,
@@ -429,6 +461,14 @@ class GameWindow(pyglet.window.Window):  # Main game window
         except KeyError:
             logger.debug("Texture \"{0}\" not found".format(name))
             return None
+
+    # def on_resize(self, width, height):
+    #     # Based on the default with more useful clipping planes
+    #     pyglet.gl.glViewport(0, 0, width, height)
+    #     pyglet.gl.glMatrixMode(pyglet.gl.GL_PROJECTION)
+    #     pyglet.gl.glLoadIdentity()
+    #     pyglet.gl.glOrtho(0, width, 0, height, 0.0, 1000)
+    #     pyglet.gl.glMatrixMode(pyglet.gl.GL_MODELVIEW)
 
     def load_animations(self):
         logger.info("Loading animations...")
@@ -604,7 +644,7 @@ class GameWindow(pyglet.window.Window):  # Main game window
         if button == 1:
             if self.ui.check(x, y):  # Checks if mouse press is on ui elements
                 logger.debug("Button hit, not registering presses on grid.")
-            else:   # if its not, handle presses as usual
+            elif p:   # if its not, handle presses as usual
                 if p.actions["targeting"]:
                     if (
                         p.actions["targeting"].use(
@@ -612,7 +652,7 @@ class GameWindow(pyglet.window.Window):  # Main game window
                         )
                     ):
                         p.clear_ability_target()
-                elif p and len(self.game.enemies) > 0:
+                elif len(self.game.enemies) > 0:
                     for e in self.game.spatial_hash.get_objects_from_point(
                         gamepos, radius=32, type=Enemy
                     ):
@@ -675,6 +715,8 @@ class GameWindow(pyglet.window.Window):  # Main game window
                     self.game.player.levelup(attribute="str")
                     self.game.player.levelup(attribute="agi")
                     self.game.player.levelup(attribute="int")
+            if symbol == k.F3:
+                self.game.player.die()
 
             if symbol == k.LSHIFT:
                 self.game.player.actions["sprint"] = True
@@ -697,6 +739,12 @@ class GameWindow(pyglet.window.Window):  # Main game window
                 self.game.player.levelup(attribute="agi")
             if symbol == k.HASH:
                 self.game.player.levelup(attribute="int")
+        else:
+            if symbol == k.F3:
+                self.game.spawn_player(
+                    self.grid_to_window(*self.game.dungeon.startroom.center)
+                )
+
 
     def on_key_release(self, symbol, modifiers):
         k = pyglet.window.key
@@ -726,6 +774,7 @@ class GameWindow(pyglet.window.Window):  # Main game window
     def render(self, dt):
         pyglet.gl.glClearColor(*lookup_color("dgrey", gl=True))
         self.clear()
+        pyglet.gl.glEnable(pyglet.gl.GL_DEPTH_TEST)
         self.batches["dungeon"].draw()
         self.batches["gui0"].draw()
         self.batches["creatures"].draw()

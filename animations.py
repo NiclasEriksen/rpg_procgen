@@ -101,24 +101,59 @@ class HandAnimAttack:
 
     def update(self, dt):
         if self.cur_time < self.max_time:
-            offset_y = self.max_offset * smooth_in_out(
+            value = smooth_in_out(
                 self.cur_time / self.max_time * 1
             )
-            offset_x = self.max_offset // 3 * smooth_in_out(
-                self.cur_time / self.max_time * 1
-            )
+            offset_y = self.max_offset * value
+            offset_x = self.max_offset // 3 * value
+
+            # if self.owner.limbs[self.hand].glow:
+            #     self.owner.limbs[self.hand].glow.opacity = value * 255
+            #     self.owner.limbs[self.hand].glow.scale = 1 + value / 2
+
             if self.hand == "left":
-                self.owner.lhand_offset = (-offset_x, offset_y)
+                self.owner.limbs[self.hand].offset = (offset_x, offset_y)
             elif self.hand == "right":
-                self.owner.rhand_offset = (offset_x, offset_y)
+                self.owner.limbs[self.hand].offset = (-offset_x, offset_y)
+
             self.cur_time += dt
+
         else:
-            if self.hand == "left":
-                self.owner.lhand_offset = (0, 0)
-            elif self.hand == "right":
-                self.owner.rhand_offset = (0, 0)
+            # if self.owner.limbs[self.hand].glow:
+            #     self.owner.limbs[self.hand].glow.opacity = 0
+            #     self.owner.limbs[self.hand].glow.scale = 1
+            self.owner.limbs[self.hand].offset = (0, 0)
 
             self.owner.child_objects.remove(self)
+
+
+class Pulse:
+
+    def __init__(
+        self, glow_object, frequency=1,
+        max_opacity=1., min_scale=1., max_scale=1.5
+    ):
+        self.owner = glow_object
+        self.speed = frequency
+        self.scale_min, self.scale_max = min_scale, max_scale
+        self.max_opacity = max_opacity
+        self.color = glow_object.color
+        self.max_time = frequency
+        self.cur_time = 0
+        self.settle = False
+
+    def update(self, dt):
+        if self.cur_time < self.max_time and not self.settle:
+            value = smooth_in_out(
+                    self.cur_time / self.max_time * 1
+            )
+            self.owner.opacity = value * (self.max_opacity * 255)
+            self.owner.scale = self.scale_min + (
+                value * (self.scale_max - self.scale_min)
+            )
+            self.cur_time += dt
+        else:
+            self.cur_time = 0
 
 
 class HeadBobbing:

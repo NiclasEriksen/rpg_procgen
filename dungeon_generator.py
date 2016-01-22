@@ -1,6 +1,8 @@
 import math
 import random
 from functions import *
+from spanning_tree import get_connections
+from collections import Counter
 
 
 class DungeonGenerator:
@@ -173,11 +175,16 @@ class DungeonGenerator:
         # if len(self.rooms) < self.config["roomcount_min"]:
         #     self.logger.warning("Could not generate enough rooms, retrying.")
         #     self.generate()
-        oldroom = None
-        for r in self.rooms:
-            if oldroom:
-                self.connect_rooms(r, oldroom)
-            oldroom = r
+        # oldroom = None
+        # for r in self.rooms:
+        #     if oldroom:
+        #         self.connect_rooms(r, oldroom)
+        #     oldroom = r
+
+        self.connect_rooms()
+        l = [item for sublist in self.connections for item in sublist]
+        sl = sorted(Counter(l).items(), key=lambda x: x[::-1])
+        self.startroom = self.rooms[sl[0][0]]
 
         self.define_rooms()
 
@@ -192,7 +199,7 @@ class DungeonGenerator:
 
     def define_rooms(self):
         available_rooms = self.rooms.copy()
-        self.startroom = self.rooms[random.randrange(0, len(self.rooms))]
+        # self.startroom = self.rooms[random.randrange(0, len(self.rooms))]
         available_rooms.remove(self.startroom)
         # poi.append(POI(*startroom.center))
         while len(available_rooms):
@@ -268,7 +275,17 @@ class DungeonGenerator:
         self.rooms = []
         self.corridors = []
 
-    def connect_rooms(self, r1, r2):
+    def connect_rooms(self):
+        roomcenters = []
+        for r in self.rooms:
+            roomcenters.append(r.center)
+        connections = get_connections(roomcenters)
+        self.connections = connections
+
+        for c in connections:
+            self.connect_two_rooms(self.rooms[c[0]], self.rooms[c[1]])
+
+    def connect_two_rooms(self, r1, r2):
         x1, y1 = r1.center
         x2, y2 = r2.center
         # 50/50 chance of starting horizontal or vertical
