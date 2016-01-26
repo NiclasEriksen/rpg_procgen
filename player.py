@@ -25,6 +25,7 @@ class Player(Actor):
         self.child_objects = []
         self.cast_object = None
         self.x, self.y = x, y
+        # self.movement = Movement(self)
         self.lhand_offset = (0, 0)
         self.rhand_offset = (0, 0)
         self.body_offset = (0, 0)
@@ -228,50 +229,6 @@ class Player(Actor):
         self.auto_attack_target = None
         self.target = None
 
-    def move(self, dt, newpos=False):
-        old_x, old_y = self.x, self.y
-        if newpos:
-            x, y = newpos
-        else:
-            x, y = old_x, old_y
-            d = self.move_dir
-            ms = self.stats.get("ms")
-            if ms > self.max_velocity:
-                ms = self.max_velocity
-
-            for key, value in d.items():
-                if value:
-                    self.actions["movement"] = True
-                    break
-            else:
-                self.actions["movement"] = False
-
-            if (d["up"] or d["down"]) and not (d["up"] == d["down"]):
-                if (d["left"] or d["right"]) and not (d["left"] == d["right"]):
-                    ms /= get_diag_ratio()  # Reduces movement speed if diag
-
-            if d["up"] and not d["down"]:
-                if self.body.velocity.y < ms:
-                    self.body.velocity.y += ms * 5 * dt
-                y += dt * ms
-            if d["down"] and not d["up"]:
-                y -= dt * ms
-                if self.body.velocity.y > -ms:
-                    self.body.velocity.y -= ms * 5 * dt
-            if d["left"] and not d["right"]:
-                if self.body.velocity.x > -ms:
-                    self.body.velocity.x -= ms * 5 * dt
-                # x -= dt * ms
-            if d["right"] and not d["left"]:
-                if self.body.velocity.x < ms:
-                    self.body.velocity.x += ms * 5 * dt
-
-        self.x, self.y = self.body.position
-        if newpos:
-            self.x, self.y = x, y
-            self.body.position = x, y
-        self.window.update_offset(dx=old_x - self.x, dy=old_y - self.y)
-
     def halt_movement(self):
         for key, value in self.move_dir.items():
             self.move_dir[key] = False
@@ -419,18 +376,6 @@ class Player(Actor):
         for key, limb in self.limbs.items():
             limb.update_pos()
 
-        # self.rhand_sprite.x, self.rhand_sprite.y = rotate2d(
-        #     -angle, (
-        #         self.sprite.x + 8 + self.rhand_offset[1],
-        #         self.sprite.y - 12 + self.rhand_offset[0]
-        #     ),
-        #     (self.sprite.x, self.sprite.y)
-        # )
-        # self.rhand_glow.x, self.rhand_glow.y = (
-        #     self.rhand_sprite.x, self.rhand_sprite.y
-        # )
-        # self.rhand_sprite.rotation = self.angle + 90
-        # self.rhand_glow.rotation = self.angle + 90
         self.sprite.x, self.sprite.y = rotate2d(
             math.radians(self.angle + 90), (
                 self.windowpos[0] + self.body_offset[0],
@@ -464,7 +409,10 @@ class Player(Actor):
             if self.xp >= 30:
                 self.levelup()
                 self.xp = 0
-            self.move(dt)
+            self.movement.speed = self.stats.get("ms")
+            old_x, old_y = self.x, self.y
+            self.movement.update(dt)
+            self.window.update_offset(dx=old_x - self.x, dy=old_y - self.y)
             if self.actions["movement"] and self.cast_object:
                 self.cast_object = None
                 logging.info("Cast interrupted by movement.")

@@ -1,15 +1,70 @@
 from brain import Brain
-from functions import get_dist, rotate2d
+from functions import get_dist, rotate2d, get_diag_ratio
 from random import randrange
 from dungeon_generator import Collidable
 from pyglet.sprite import Sprite
 import math
 
 
+class Movement:
+
+    def __init__(self, owner, speed=0, max_speed=800, target=None):
+        self.owner = owner
+        self.speed = speed
+        self.max_speed = max_speed
+        self.target = target
+
+    def set_pos(self, pos):
+        self.owner.x, self.owner.y = pos[0], pos[1]
+        self.owner.body.position = pos[0], pos[1]
+
+    def update(self, dt):
+        ms = self.speed
+        if ms > self.max_speed:
+            ms = self.max_speed
+
+        if self.target:
+            velx = self.target[0] - self.owner.x
+            vely = self.target[1] - self.owner.y
+            if hasattr(self.owner, "body"):
+                self.owner.body.velocity.x += velx / 10
+                self.owner.body.velocity.y += vely / 10
+            else:
+                print("No procedure for that yet.")
+
+        if hasattr(self.owner, "body"):
+            if hasattr(self.owner, "move_dir"):
+                d = self.owner.move_dir
+                if (d["up"] or d["down"]) and not (d["up"] == d["down"]):
+                    if (
+                        (d["left"] or d["right"]) and not
+                        (d["left"] == d["right"])
+                    ):
+                        ms /= get_diag_ratio()  # Reduces ms if diagonal
+
+                if d["up"] and not d["down"]:
+                    if self.owner.body.velocity.y < ms:
+                        self.owner.body.velocity.y += ms * 5 * dt
+
+                if d["down"] and not d["up"]:
+                    if self.owner.body.velocity.y > -ms:
+                        self.owner.body.velocity.y -= ms * 5 * dt
+
+                if d["left"] and not d["right"]:
+                    if self.owner.body.velocity.x > -ms:
+                        self.owner.body.velocity.x -= ms * 5 * dt
+
+                if d["right"] and not d["left"]:
+                    if self.owner.body.velocity.x < ms:
+                        self.owner.body.velocity.x += ms * 5 * dt
+            self.owner.x, self.owner.y = self.owner.body.position
+
+
 class Actor:
 
     def __init__(self):
         self.brain = Brain()
+        self.movement = Movement(self, max_speed=800)
         self.max_velocity = 800
         self.move_target = None
         self.attack_target = None
@@ -31,17 +86,18 @@ class Actor:
             self.brain.pop_state()
 
     def ai_move_to_target(self, *args, **kwargs):
-        if self.move_target:
+        mt = self.move_target
+        if mt:
             d = get_dist(
-                self.move_target.x,
-                self.move_target.y,
+                mt.x,
+                mt.y,
                 self.x,
                 self.y
             )
             if d > self.get_stat("arng"):
                 line_of_sight = True
                 line = (
-                    (self.x, self.y), (self.move_target.x, self.move_target.y)
+                    (self.x, self.y), (mt.x, mt.y)
                 )
                 raycast_objects = self.game.spatial_hash.get_objects_from_line(
                     *line,
@@ -53,11 +109,9 @@ class Actor:
                             line_of_sight = False
                             break
                 if line_of_sight:
-                    velx = self.move_target.x - self.x
-                    vely = self.move_target.y - self.y
-                    self.body.velocity.x += velx / 10
-                    self.body.velocity.y += vely / 10
+                    self.movement.target = (mt.x, mt.y)
                 else:
+                    self.movement.target = None
                     self.brain.pop_state()
             else:
                 self.brain.pop_state()

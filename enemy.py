@@ -3,7 +3,7 @@ import pyglet
 from functions import *
 from load_config import ConfigSectionMap as load_cfg
 from actor import Actor
-from zsprite import ZSprite
+# from zsprite import ZSprite
 
 
 class Enemy(Actor):
@@ -24,7 +24,7 @@ class Enemy(Actor):
             self.window = window
             sx, sy = self.window.get_windowpos(x, y)
             self.sprite = pyglet.sprite.Sprite(
-                window.textures["player"],
+                window.textures["goblin"],
                 x=sx, y=sy,
                 batch=window.batches["creatures"],
                 subpixel=True
@@ -222,6 +222,7 @@ class Enemy(Actor):
             self.brain.update()
             self.auto_attack(dt)
             oldx, oldy = self.x, self.y
+            self.movement.update(dt)
             self.x, self.y = self.body.position
             if not (self.x == oldx) or not (self.y == oldy):
                 self.game.spatial_hash.remove_object(self, self.hash_position)
@@ -235,7 +236,7 @@ class Enemy(Actor):
                 # if not self.sprite.group == newgroup:
                 #     self.sprite.group = newgroup
             newpos = self.window.get_windowpos(
-                self.x, self.y + self.sprite.height // 3, precise=True
+                self.x, self.y + self.sprite.height // 5, precise=True
             )
             self.rectangle = create_rectangle(self.x, self.y, 32, 32)
             # print(newpos)

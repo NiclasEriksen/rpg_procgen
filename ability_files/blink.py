@@ -32,7 +32,7 @@ class Blink(UsableAbility):
                 self.owner.window.animator.spawn_anim(
                     self.use_effect, pos, scale=self.use_effect_scale
                 )
-                self.owner.move(0, newpos=target)
+                self.owner.movement.set_pos(target)
                 pos = self.owner.get_windowpos()
                 self.owner.window.animator.spawn_anim(
                     self.use_effect, pos, scale=self.use_effect_scale

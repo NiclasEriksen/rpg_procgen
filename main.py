@@ -72,7 +72,6 @@ class Game:
             dungeon_cfg
         )
 
-
         self.game_size = (
             dungeon_cfg["dungeon_size"][0] * 32,
             dungeon_cfg["dungeon_size"][1] * 32
@@ -382,8 +381,8 @@ class GameWindow(pyglet.window.Window):  # Main game window
 
     def load_textures(self):
         logger.info("Loading textures...")
-        player_img = center_image(
-            pyglet.image.load(os.path.join(RES_PATH, 'player.png'))
+        goblin_img = center_image(
+            pyglet.image.load(os.path.join(RES_PATH, 'crappy_goblin.png'))
         )
         player_body_img = center_image(
             pyglet.image.load(os.path.join(RES_PATH, 'player_body.png'))
@@ -423,7 +422,7 @@ class GameWindow(pyglet.window.Window):  # Main game window
         )
 
         self.textures = dict(
-            player=player_img,
+            goblin=goblin_img,
             player_body=player_body_img,
             player_body_glow=player_body_glow_img,
             player_hand=player_hand_img,

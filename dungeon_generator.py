@@ -186,6 +186,16 @@ class DungeonGenerator:
         sl = sorted(Counter(l).items(), key=lambda x: x[::-1])
         self.startroom = self.rooms[sl[0][0]]
 
+        p1 = self.startroom.center
+        longest = 0
+        endroom = None
+        for r in self.rooms:
+            l = get_dist(*p1, *r.center)
+            if l > longest:
+                endroom = r
+                longest = l
+        self.endroom = endroom
+
         self.define_rooms()
 
         self.grid = self.get_all_rects()
@@ -201,6 +211,7 @@ class DungeonGenerator:
         available_rooms = self.rooms.copy()
         # self.startroom = self.rooms[random.randrange(0, len(self.rooms))]
         available_rooms.remove(self.startroom)
+        available_rooms.remove(self.endroom)
         # poi.append(POI(*startroom.center))
         while len(available_rooms):
             r = available_rooms[random.randrange(0, len(available_rooms))]
