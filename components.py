@@ -6,6 +6,116 @@ class Batch(object):
         self.batch = batchname
 
 
+class Attributes(object):
+    def __init__(self):
+        self.point = {
+            "str": 0,
+            "agi": 0,
+            "int": 0
+        }
+        self.updated = False
+
+
+class EffectiveStats(object):
+    def __init__(self):
+        self.type = {
+            "hp_max": 0,
+            "sta_max": 0,
+            "mana_max": 0,
+            "armor": 0,
+            "magic_def": 0,
+            "ms": 0,
+            "dmg": 0,
+            "aspd": 0,
+            "arng": 0,
+            "crit_chance": 0,
+            "crit_power": 0,
+            "armor_pen": 0,
+            "sp": 0,
+            "sp_crit_chance": 0,
+            "sp_crit_power": 0,
+            "sp_pen": 0
+        }
+        self.initialized = False
+
+
+class BaseStats(object):
+    def __init__(self):
+        self.type = {
+            "hp_max": 10,
+            "sta_max": 10,
+            "mana_max": 10,
+            "armor": 0,
+            "magic_def": 0,
+            "ms": 80,
+            "dmg": 1,
+            "aspd": 30,
+            "arng": 40,
+            "crit_chance": 0,
+            "crit_power": 0,
+            "armor_pen": 0,
+            "sp": 0,
+            "sp_crit_chance": 0,
+            "sp_crit_power": 0,
+            "sp_pen": 0
+        }
+
+
+class ActiveAbilities(object):
+    def __init__(self):
+        self.slots = {
+            1: None, 2: None,
+            3: None, 4: None,
+            5: None, 6: None,
+            7: None, 8: None,
+            9: None, 10: None,
+            11: None, 12: None,
+            13: None, 14: None,
+            15: None, 16: None
+        }
+
+
+class PassiveAbilities(object):
+    def __init__(self):
+        self.slots = {
+            1: None, 2: None,
+            3: None, 4: None,
+            5: None, 6: None,
+            7: None, 8: None,
+            9: None, 10: None,
+            11: None, 12: None,
+            13: None, 14: None,
+            15: None, 16: None
+        }
+
+
+class Equipment(object):
+    def __init__(self):
+        self.slots = {
+            "head": None,
+            "neck": None,
+            "torso": None,
+            "shoulders": None,
+            "wrists": None,
+            "hands": None,
+            "legs": None,
+            "feet": None,
+            "ring1": None,
+            "ring2": None,
+            "trinket1": None,
+            "trinket2": None,
+            "mainhand": None,
+            "offhand": None
+        }
+        self.changed = False
+
+
+class ActiveEffects(object):
+    def __init__(self):
+        self.buffs = []
+        self.debuffs = []
+
+
 class XP(object):
     def __init__(self):
         self.count = 0
@@ -41,7 +151,7 @@ class KeyboardControl(object):
 class Movement(object):
     def __init__(self):
         self.max_speed = 120
-        self.acceleration = 8
+        self.acceleration = self.max_speed / 15
 
 
 class StaticPosition(object):
@@ -94,18 +204,21 @@ class PhysBody(object):
 
 
 class HP(object):
-    def __init__(self, amount=10):
+    def __init__(self, amount=1):
         self.value = amount
+        self.max = amount
 
 
 class Stamina(object):
-    def __init__(self, amount=10):
+    def __init__(self, amount=1):
         self.value = amount
+        self.max = amount
 
 
 class Mana(object):
-    def __init__(self, amount=10):
+    def __init__(self, amount=1):
         self.value = amount
+        self.max = amount
 
 
 class LastAttacker(object):
@@ -121,3 +234,19 @@ class AutoAttackTarget(object):
 class FocusTarget(object):
     def __init__(self):
         self.who = None
+
+
+class TargetEffects(object):
+    def __init__(self):
+        pass
+
+
+class EffectTarget(object):
+    def __init__(self):
+        pass
+
+
+class BasicAttack(object):
+    def __init__(self):
+        self.dmg = 1
+        self.effects = None

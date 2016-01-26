@@ -170,18 +170,28 @@ if __name__ == "__main__":
     # Initialize world
     appworld = GameWorld()
 
+    # Add component types
+    appworld.add_componenttype(KeyboardControl)
+
     # Add systems to the world to be processed in that order.
     appworld.add_system(KeyboardHandling(appworld))
-    appworld.add_system(SpriteBatchSystem(appworld))
+    appworld.add_system(InitializeEffectiveStatsSystem(appworld))
+    appworld.add_system(ApplyAttributeStatsSystem(appworld))
+    appworld.add_system(ApplyHPSystem(appworld))
+    appworld.add_system(ApplyStaminaSystem(appworld))
+    appworld.add_system(ApplyManaSystem(appworld))
+    appworld.add_system(ApplyBasicAttackSystem(appworld))
+    appworld.add_system(ApplyMovementSpeedSystem(appworld))
+    appworld.add_system(LevelUpSystem(appworld))
     appworld.add_system(MobNamingSystem(appworld))
+    appworld.add_system(SpriteBatchSystem(appworld))
     appworld.add_system(InputMovementSystem(appworld))
     appworld.add_system(MoveSystem(appworld))
+    appworld.add_system(PhysicsSystem(appworld))
     appworld.add_system(StaticSpritePosSystem(appworld))
     appworld.add_system(WindowPosSystem(appworld))
     appworld.add_system(SpritePosSystem(appworld))
     appworld.add_system(RenderSystem(appworld))
-    appworld.add_system(PhysicsSystem(appworld))
-    appworld.add_componenttype(KeyboardControl)
 
     # Schedule the update function on the world to run every frame.
     pyglet.clock.schedule_interval(appworld.process, 1.0 / FPS)
