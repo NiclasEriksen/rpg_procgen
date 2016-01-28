@@ -5,6 +5,7 @@ from pyglet.window import key
 from pymunk import Body as pymunk_body
 from pymunk import Circle as pymunk_circle
 from pymunk import moment_for_circle
+from functions import get_dist
 
 
 class MoveSystem(System):
@@ -172,13 +173,13 @@ class InputMovementSystem(System):
                         b.body.velocity.x += acc
 
 
-class KeyboardHandling(System):
-    def __init__(self, world):
-        self.is_applicator = False
-        self.componenttypes = (KeyboardControl,)
+# class KeyboardHandling(System):
+#     def __init__(self, world):
+#         self.is_applicator = False
+#         self.componenttypes = (KeyboardControl,)
 
-    def process(self, world, components):
-        world.process_keyboard_input()
+#     def process(self, world, components):
+#         world.process_keyboard_input()
 
 
 class LevelUpSystem(Applicator):
@@ -293,6 +294,64 @@ class ApplyMovementSpeedSystem(System):
         for es, m in sets:
             m.max_speed = es.type["ms"]
             m.acceleration = m.max_speed / 15
+
+
+class FollowSystem(System):
+    def __init__(self, world):
+        self.is_applicator = True
+        self.componenttypes = (FollowTarget, Movement, Position, PhysBody)
+
+    def process(self, world, sets):
+        for ft, m, p, pb in sets:
+            if ft.who and pb.body:
+                if (
+                    get_dist(
+                        ft.who.position.x, ft.who.position.y,
+                        p.x, p.y
+                    ) > ft.range
+                ):
+                    velx = ft.who.position.x - p.x
+                    vely = ft.who.position.y - p.y
+                    pb.body.velocity.x += velx / 10
+                    pb.body.velocity.y += vely / 10
+
+
+class TargetMobSystem(System):
+    def __init__(self, world):
+        self.is_applicator = True
+        self.componenttypes = (IsPlayer, MouseClicked)
+
+    def process(self, world, sets):
+        # p = world.get_player()
+        enemies = world.combined_components((IsMob, Position))
+        # print(enemies)
+        for player, mc in sets:
+            for e, pos in enemies:
+                if (
+                    get_dist(
+                        mc.x, mc.y,
+                        pos.x, pos.y
+                    ) <= 32
+                ):
+                    if mc.button == 1:
+                        print("Targeted.")
+                    elif mc.button == 4:
+                        print("Attack!")
+                    mc.handled = True
+
+
+class CleanupClickSystem(System):
+    """Removes mouse clicked objects for all entities."""
+
+    def __init__(self, world):
+        self.is_applicator = True
+        self.componenttypes = (MouseClicked,)
+
+    def process(self, world, sets):
+        for mc, *rest in sets:
+            p = world.get_entities(mc)[0]
+            delattr(p, "mouseclicked")
+            print("Removed")
 
 
 class BaseSystem(System):

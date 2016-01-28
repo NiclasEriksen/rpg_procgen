@@ -188,7 +188,7 @@ class World(object):
         empty list is returned.
         """
         if componenttype in self.components:
-            return self.components[componenttype].values()
+            return list(self.components[componenttype].values())
         return []
 
     def get_entities(self, component):

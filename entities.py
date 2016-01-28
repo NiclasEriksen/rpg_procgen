@@ -14,6 +14,8 @@ class Player(Entity):
         self.staticposition = StaticPosition(x=640, y=360)
         self.movement = Movement()
         self.input = Input()
+        self.mousecontrolled = MouseControlled()
+        self.keyboardcontrolled = KeyboardControlled()
 
         self.xp = XP()
         self.level = Level()
@@ -40,6 +42,7 @@ class Enemy(Entity):
         self.physbody = PhysBody()
         self.position = Position()
         self.movement = Movement()
+        self.followtarget = FollowTarget()
         self.sprite = Sprite(world.textures["enemy"])
         self.batch = Batch("creatures")
         self.ismob = IsMob()

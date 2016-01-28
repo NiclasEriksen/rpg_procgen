@@ -744,7 +744,6 @@ class GameWindow(pyglet.window.Window):  # Main game window
                     self.grid_to_window(*self.game.dungeon.startroom.center)
                 )
 
-
     def on_key_release(self, symbol, modifiers):
         k = pyglet.window.key
         if self.game.player:

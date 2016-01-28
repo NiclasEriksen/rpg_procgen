@@ -143,9 +143,20 @@ class Input(object):
         pass
 
 
-class KeyboardControl(object):
+class KeyboardControlled(object):
     def __init__(self):
         pass
+
+
+class MouseControlled(object):
+    def __init__(self):
+        self.x, self.y = 0, 0
+
+
+class MouseClicked(object):
+    def __init__(self, button, x, y):
+        self.button, self.x, self.y = button, x, y
+        self.handled = False
 
 
 class Movement(object):
@@ -250,3 +261,9 @@ class BasicAttack(object):
     def __init__(self):
         self.dmg = 1
         self.effects = None
+
+
+class FollowTarget(object):
+    def __init__(self):
+        self.who = None
+        self.range = 60

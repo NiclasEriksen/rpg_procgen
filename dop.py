@@ -17,6 +17,20 @@ RES_PATH = os.path.join(ROOT, "resources")
 PAUSED = False
 FPS = 60.0               # Target frames per second
 
+# Simple settings (temp)
+keymap = {
+    49: 1,
+    50: 2,
+    51: 3,
+    52: 4,
+    53: 5,
+    54: 6,
+    55: 7,
+    56: 8,
+    57: 9,
+    48: 10,
+}
+
 # Get information about the OS and display #
 platform = pyglet.window.get_platform()
 display = platform.get_default_display()
@@ -31,6 +45,10 @@ class GameWorld(World):
         super().__init__()
         # Initialize a window
         self.window = GameWindow()
+        # Forward window events to gameworld
+        self.window.on_mouse_motion = self.on_mouse_motion
+        self.window.on_mouse_press = self.on_mouse_press
+        self.window.on_key_press = self.on_key_press
 
         # Create batches and load textures
         self.batches = OrderedDict()
@@ -38,7 +56,6 @@ class GameWorld(World):
 
         # Create a keyboard input handler for pyglet window
         self.input_keys = pyglet.window.key.KeyStateHandler()
-        self.key_blacklist = []
         self.window.push_handlers(self.input_keys)
 
         # Make physical space for physics engine
@@ -48,7 +65,7 @@ class GameWorld(World):
         # Add entities to the world
         self.e = Enemy(self)
         self.enemies = []
-        for i in range(30):
+        for i in range(10):
             e = Enemy(self)
             e.position.set(
                 random.randrange(20, 1000), random.randrange(20, 700)
@@ -56,6 +73,7 @@ class GameWorld(World):
             self.enemies.append(e)
 
         self.spawn_player()
+        self.e.followtarget.who = self.p
 
     def spawn_player(self, point=(0, 0)):
         # self.player = Mage(
@@ -86,53 +104,83 @@ class GameWorld(World):
             player=player_body_img,
         )
 
-    def process_keyboard_input(self):
-        k = self.input_keys
-        bl = self.key_blacklist
+    def get_player(self):
+        return self.p
 
-        if k[key.F2]:
-            if key.F2 not in bl:
-                self.key_blacklist.append(key.F2)
+    def get_gamepos(self, x, y):
+        return int(x - self.window.offset_x), int(y - self.window.offset_y)
 
-                e = [None]
-                c = self.get_components(Input)
-                for comp in c:
-                    e = self.get_entities(comp)
+    def on_mouse_motion(self, x, y, dx, dy):
+        pass
+        # c = self.get_components(MouseControlled)
+        # e = None
+        # if c:
+        #     try:
+        #         e = self.get_entities(c[0])[0]
+        #     except KeyError:
+        #         pass
 
-                if e[0] == self.p:
-                    delattr(self.p, "input")
-                    self.e.input = Input()
-                elif e[0] == self.e:
-                    delattr(self.e, "input")
-                    self.p.input = Input()
+        # if e:
+        #     e.mousecontrolled.x, e.mousecontrolled.y = self.get_gamepos(x, y)
+        # print current mouse position
+        # print(x, y)
 
-        if k[key.F3]:
-            if key.F3 not in bl:
-                self.key_blacklist.append(key.F3)
+    def on_mouse_press(self, x, y, button, modifiers):
+        # pass
+        # when a user presses a mouse button, print which one and mousepos
+        print("{0} pressed at: {1},{2}.".format(button, x, y))
+        p = self.get_player()
+        p.mouseclicked = MouseClicked(button, *self.get_gamepos(x, y))
 
-                if getattr(self.e, "physbody"):
-                    delattr(self.e, "physbody")
-                else:
-                    self.e.physbody = PhysBody()
+    def on_key_press(self, k, modifiers):
+        if k == key.ESCAPE:
+            # logger.info("Exiting...")
+            pyglet.app.exit()
 
-        if k[key.F4]:
-            if key.F4 not in bl:
-                self.key_blacklist.append(key.F4)
+        if k == key.F2:
+            e = [None]
+            c = self.get_components(Input)
+            for comp in c:
+                e = self.get_entities(comp)
 
-                if getattr(self.p, "staticposition"):
-                    delattr(self.p, "staticposition")
-                    self.p.windowposition = WindowPosition()
-                else:
-                    self.p.staticposition = StaticPosition(x=640, y=360)
-                    self.window.offset_x = 640 - self.p.position.x
-                    self.window.offset_y = 360 - self.p.position.y
-                    delattr(self.p, "windowposition")
+            if e[0] == self.p:
+                delattr(self.p, "input")
+                self.e.input = Input()
+            elif e[0] == self.e:
+                delattr(self.e, "input")
+                self.p.input = Input()
 
+        if k == key.F3:
+            if getattr(self.e, "physbody"):
+                delattr(self.e, "physbody")
+            else:
+                self.e.physbody = PhysBody()
 
-        # Checks blacklist for released keys and removes them
-        for bl_k in bl:
-            if not k[bl_k]:
-                self.key_blacklist.remove(bl_k)
+        if k == key.F4:
+            if getattr(self.p, "staticposition"):
+                delattr(self.p, "staticposition")
+                self.p.windowposition = WindowPosition()
+            else:
+                self.p.staticposition = StaticPosition(x=640, y=360)
+                self.window.offset_x = 640 - self.p.position.x
+                self.window.offset_y = 360 - self.p.position.y
+                delattr(self.p, "windowposition")
+
+        c = self.get_components(KeyboardControlled)
+        e = None
+        if c:
+            try:
+                e = self.get_entities(c[0])[0]
+            except KeyError:
+                pass
+
+        if e:
+            if getattr(e, "activeabilities"):
+                try:
+                    print(e.activeabilities.slots[keymap[k]])
+                except KeyError:
+                    # print("No ability defined for that key.")
+                    pass
 
 
 class GameWindow(pyglet.window.Window):  # Main game window
@@ -171,10 +219,10 @@ if __name__ == "__main__":
     appworld = GameWorld()
 
     # Add component types
-    appworld.add_componenttype(KeyboardControl)
+    # appworld.add_componenttype(KeyboardControl)
 
     # Add systems to the world to be processed in that order.
-    appworld.add_system(KeyboardHandling(appworld))
+    # appworld.add_system(KeyboardHandling(appworld))
     appworld.add_system(InitializeEffectiveStatsSystem(appworld))
     appworld.add_system(ApplyAttributeStatsSystem(appworld))
     appworld.add_system(ApplyHPSystem(appworld))
@@ -187,10 +235,13 @@ if __name__ == "__main__":
     appworld.add_system(SpriteBatchSystem(appworld))
     appworld.add_system(InputMovementSystem(appworld))
     appworld.add_system(MoveSystem(appworld))
+    appworld.add_system(FollowSystem(appworld))
     appworld.add_system(PhysicsSystem(appworld))
+    appworld.add_system(TargetMobSystem(appworld))
     appworld.add_system(StaticSpritePosSystem(appworld))
     appworld.add_system(WindowPosSystem(appworld))
     appworld.add_system(SpritePosSystem(appworld))
+    appworld.add_system(CleanupClickSystem(appworld))
     appworld.add_system(RenderSystem(appworld))
 
     # Schedule the update function on the world to run every frame.
