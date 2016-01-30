@@ -11,7 +11,7 @@ class Player(Entity):
 
         self.physbody = PhysBody()
         self.position = Position()
-        # self.lightsource = LightSource()
+        self.lightsource = LightSource()
         self.staticposition = StaticPosition(x=640, y=360)
         self.movement = Movement()
         self.input = Input()

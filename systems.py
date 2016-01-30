@@ -46,38 +46,60 @@ class RenderSystem(System):
 
             i = 0
             end = len(world.viewlines) - 1
+            vertices = []
             while i <= end:
                 if i != end:
-                    vlist = pyglet.graphics.vertex_list(
-                        3, (
-                            'v2f',
-                            [
-                                wl[i].p1[0] + world.window.offset_x,
-                                wl[i].p1[1] + world.window.offset_y,
-                                wl[i].p2[0] + world.window.offset_x,
-                                wl[i].p2[1] + world.window.offset_y,
-                                wl[i+1].p2[0] + world.window.offset_x,
-                                wl[i+1].p2[1] + world.window.offset_y,
-                            ]
-                        )
-                    )
+                    # vlist = pyglet.graphics.vertex_list(
+                    #     3, (
+                    #         'v2f',
+                    #         [
+                    #             wl[i].p1[0] + world.window.offset_x,
+                    #             wl[i].p1[1] + world.window.offset_y,
+                    #             wl[i].p2[0] + world.window.offset_x,
+                    #             wl[i].p2[1] + world.window.offset_y,
+                    #             wl[i+1].p2[0] + world.window.offset_x,
+                    #             wl[i+1].p2[1] + world.window.offset_y,
+                    #         ]
+                    #     )
+                    # )
+                    vertices += [
+                        wl[i].p1[0] + world.window.offset_x,
+                        wl[i].p1[1] + world.window.offset_y,
+                        wl[i].p2[0] + world.window.offset_x,
+                        wl[i].p2[1] + world.window.offset_y,
+                        wl[i+1].p2[0] + world.window.offset_x,
+                        wl[i+1].p2[1] + world.window.offset_y,
+                    ]
                 else:
-                    vlist = pyglet.graphics.vertex_list(
-                        3, (
-                            'v2f',
-                            [
-                                wl[i].p1[0] + world.window.offset_x,
-                                wl[i].p1[1] + world.window.offset_y,
-                                wl[i].p2[0] + world.window.offset_x,
-                                wl[i].p2[1] + world.window.offset_y,
-                                wl[0].p2[0] + world.window.offset_x,
-                                wl[0].p2[1] + world.window.offset_y,
-                            ]
-                        )
-                    )
-                glColor3f(1, 1, 1)
-                vlist.draw(GL_TRIANGLES)
+                    # vlist = pyglet.graphics.vertex_list(
+                    #     3, (
+                    #         'v2f',
+                    #         [
+                    #             wl[i].p1[0] + world.window.offset_x,
+                    #             wl[i].p1[1] + world.window.offset_y,
+                    #             wl[i].p2[0] + world.window.offset_x,
+                    #             wl[i].p2[1] + world.window.offset_y,
+                    #             wl[0].p2[0] + world.window.offset_x,
+                    #             wl[0].p2[1] + world.window.offset_y,
+                    #         ]
+                    #     )
+                    # )
+                    vertices += [
+                        wl[i].p1[0] + world.window.offset_x,
+                        wl[i].p1[1] + world.window.offset_y,
+                        wl[i].p2[0] + world.window.offset_x,
+                        wl[i].p2[1] + world.window.offset_y,
+                        wl[0].p2[0] + world.window.offset_x,
+                        wl[0].p2[1] + world.window.offset_y,
+                    ]
+                # vlist.draw(GL_TRIANGLES)
                 i += 1
+
+            vertices_gl = (GLfloat * len(vertices))(*vertices)
+            glEnableClientState(GL_VERTEX_ARRAY)
+            glVertexPointer(2, GL_FLOAT, 0, vertices_gl)
+            glColor3f(1, 1, 1)
+            glDrawArrays(GL_TRIANGLES, 0, len(vertices) // 2)
 
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE)
             glDepthMask(GL_TRUE)
@@ -86,22 +108,29 @@ class RenderSystem(System):
         glBlendFunc(
             GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA
         )
+        glDisable(GL_STENCIL_TEST)
+
+        for k, v in world.batches.items():
+            if k == "enemies":
+                glEnable(GL_STENCIL_TEST)
+                glStencilFunc(GL_EQUAL, 1, 0xFF)
+                v.draw()
+            else:
+                glDisable(GL_STENCIL_TEST)
+                v.draw()
+        for s in components:
+            if s.batchless:
+                s.draw()
         if wl:
+            glEnable(GL_STENCIL_TEST)
             glStencilFunc(GL_EQUAL, 0, 0xFF)
-            glColor4f(0.1, 0.1, 0.1, 1)
+            glColor4f(0.1, 0.05, 0.0, 0.9)
             pyglet.graphics.draw(
                 4, GL_QUADS,
                 ('v2f', [
                     0, 0, 1600, 0, 1600, 1600, 0, 1600
                 ])
             )
-            glStencilFunc(GL_EQUAL, 1, 0xFF)
-
-        for k, v in world.batches.items():
-            v.draw()
-        for s in components:
-            if s.batchless:
-                s.draw()
         glDisable(GL_BLEND)
 
         # for l in wl:
