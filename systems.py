@@ -1,11 +1,15 @@
 from components import *
 from utils.ebs import Applicator, System
 import pyglet.graphics
+from pyglet.gl import *
 from pyglet.window import key
 from pymunk import Body as pymunk_body
 from pymunk import Circle as pymunk_circle
 from pymunk import moment_for_circle
-from functions import get_dist
+from functions import get_dist, get_midpoint, rotate2d, get_angle
+import math
+
+buffers = pyglet.image.get_buffer_manager()
 
 
 class MoveSystem(System):
@@ -27,12 +31,89 @@ class RenderSystem(System):
         self.componenttypes = (Sprite,)
 
     def process(self, world, components):
-        world.window.clear()
+        glClearColor(0.2, 0.2, 0.2, 1)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+        wl = world.viewlines
+        if wl:
+            glEnable(GL_STENCIL_TEST)
+            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE)
+            glDepthMask(GL_FALSE)
+            glStencilFunc(GL_ALWAYS, 1, 0xFF)
+            glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE)
+            glStencilMask(0xFF)
+            glClear(GL_STENCIL_BUFFER_BIT)
+
+            i = 0
+            end = len(world.viewlines) - 1
+            while i <= end:
+                if i != end:
+                    vlist = pyglet.graphics.vertex_list(
+                        3, (
+                            'v2f',
+                            [
+                                wl[i].p1[0] + world.window.offset_x,
+                                wl[i].p1[1] + world.window.offset_y,
+                                wl[i].p2[0] + world.window.offset_x,
+                                wl[i].p2[1] + world.window.offset_y,
+                                wl[i+1].p2[0] + world.window.offset_x,
+                                wl[i+1].p2[1] + world.window.offset_y,
+                            ]
+                        )
+                    )
+                else:
+                    vlist = pyglet.graphics.vertex_list(
+                        3, (
+                            'v2f',
+                            [
+                                wl[i].p1[0] + world.window.offset_x,
+                                wl[i].p1[1] + world.window.offset_y,
+                                wl[i].p2[0] + world.window.offset_x,
+                                wl[i].p2[1] + world.window.offset_y,
+                                wl[0].p2[0] + world.window.offset_x,
+                                wl[0].p2[1] + world.window.offset_y,
+                            ]
+                        )
+                    )
+                glColor3f(1, 1, 1)
+                vlist.draw(GL_TRIANGLES)
+                i += 1
+
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE)
+            glDepthMask(GL_TRUE)
+            glStencilMask(0x00)
+        glEnable(GL_BLEND)
+        glBlendFunc(
+            GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA
+        )
+        if wl:
+            glStencilFunc(GL_EQUAL, 0, 0xFF)
+            glColor4f(0.1, 0.1, 0.1, 1)
+            pyglet.graphics.draw(
+                4, GL_QUADS,
+                ('v2f', [
+                    0, 0, 1600, 0, 1600, 1600, 0, 1600
+                ])
+            )
+            glStencilFunc(GL_EQUAL, 1, 0xFF)
+
         for k, v in world.batches.items():
             v.draw()
         for s in components:
             if s.batchless:
                 s.draw()
+        glDisable(GL_BLEND)
+
+        # for l in wl:
+        #     pyglet.graphics.draw(
+        #         2, GL_LINES,
+        #         ('v2i', (
+        #             int(l.p1[0]) + int(world.window.offset_x),
+        #             int(l.p1[1]) + int(world.window.offset_y),
+        #             int(l.p2[0]) + int(world.window.offset_x),
+        #             int(l.p2[1]) + int(world.window.offset_y)
+        #         ))
+        #     )
 
 
 class MobNamingSystem(System):
@@ -107,6 +188,9 @@ class PhysicsSystem(System):
                 world.phys_space.add(b.body, shape)
             else:
                 p.set(*b.body.position)
+                if abs(b.body.velocity.x) + abs(b.body.velocity.y) <= 0.1:
+                    b.body.velocity.x = 0
+                    b.body.velocity.y = 0
 
         # Checks if there are any ghost bodies in the physics engine
         if not (
@@ -171,15 +255,6 @@ class InputMovementSystem(System):
                         b.body.velocity.x -= acc
                     if k[key.D]:
                         b.body.velocity.x += acc
-
-
-# class KeyboardHandling(System):
-#     def __init__(self, world):
-#         self.is_applicator = False
-#         self.componenttypes = (KeyboardControl,)
-
-#     def process(self, world, components):
-#         world.process_keyboard_input()
 
 
 class LevelUpSystem(Applicator):
@@ -352,6 +427,137 @@ class CleanupClickSystem(System):
             p = world.get_entities(mc)[0]
             delattr(p, "mouseclicked")
             print("Removed")
+
+
+class LightingSystem(System):
+    def __init__(self, world):
+        self.is_applicator = True
+        self.componenttypes = (LightSource, PhysBody)
+
+    def create_midpoints(self, bb):
+        midpoints = []
+        # midpoints.append(
+        #     get_midpoint(
+        #         (bb.left, bb.top), (bb.left, bb.bottom)
+        #     )
+        # )
+        # midpoints.append(
+        #     get_midpoint(
+        #         (bb.left, bb.top), (bb.right, bb.top)
+        #     )
+        # )
+        # midpoints.append(
+        #     get_midpoint(
+        #         (bb.right, bb.top), (bb.right, bb.bottom)
+        #     )
+        # )
+        # midpoints.append(
+        #     get_midpoint(
+        #         (bb.left, bb.bottom), (bb.right, bb.bottom)
+        #     )
+        # )
+        midpoints.append((bb.left, bb.bottom))
+        midpoints.append((bb.left, bb.top))
+        midpoints.append((bb.right, bb.top))
+        midpoints.append((bb.right, bb.bottom))
+        return midpoints
+
+    def move_in_angle(self, a, p, d):
+        deltax = d*math.cos(a)
+        deltay = d*math.sin(a)
+        return p[0] + deltax, p[1] + deltay
+
+    def cast_ray(self, phys_space, origin, target, single=False):
+        collisions = []
+        view_dist = 1750
+        a_offset = 0.00001
+        col_group = 2
+        a = -get_angle(*origin, *target)
+        c1p = self.move_in_angle(a, origin, view_dist)
+        c1 = phys_space.segment_query_first(
+            origin, c1p, group=col_group
+        )
+        if c1:
+            hp = c1.get_hit_point()
+            collisions.append((hp.x, hp.y))
+        else:
+            collisions.append((c1p[0], c1p[1]))
+        if not single:
+            c2p = self.move_in_angle(a - a_offset, origin, view_dist)
+            # print(pos, mp, c2p)
+            c2 = phys_space.segment_query_first(
+                origin, c2p, group=col_group
+            )
+            c3p = self.move_in_angle(a + a_offset, origin, view_dist)
+            c3 = phys_space.segment_query_first(
+                origin, c3p, group=col_group
+            )
+            if c2:
+                hp = c2.get_hit_point()
+                collisions.append((hp.x, hp.y))
+            else:
+                collisions.append((c2p[0], c2p[1]))
+            if c3:
+                hp = c3.get_hit_point()
+                collisions.append((hp.x, hp.y))
+            else:
+                collisions.append((c3p[0], c3p[1]))
+
+        return collisions
+
+    def process(self, world, sets):
+        p_shapes = world.phys_space.shapes
+        world.viewlines = []
+        midpoints = []
+        collisions = []
+        #  world_corners = [(0, 0), (1200, 0), (1200, 1000), (0, 1000)]
+        # for wc in world_corners:
+        #     midpoints.append(wc)
+
+        # o = (0, 0)
+        # p = (10, 10)
+        # # a = get_angle(*o, *p)
+        # # print(a)
+        # p2 = rotate2d(0.1, p, o)
+        # p3 = rotate2d(-0.1, p, o)
+        # print(p2, p3)
+
+        for ls, pb in sets:
+            pos = (pb.body.position.x, pb.body.position.y)
+            for s in pb.body.shapes:
+                s.group = 2
+                p_shapes.remove(s)
+            for s in p_shapes:
+                if not isinstance(s, pymunk_circle):
+                    if not s.group == 2:
+                        mp = self.create_midpoints(s.bb)
+                        for p in mp:
+                            midpoints.append(p)
+                else:
+                    s.group = 2
+            for mp in midpoints:
+                collisions += self.cast_ray(world.phys_space, pos, mp)
+            # for mp in world_corners:
+            #     collisions += self.cast_ray(
+            #         world.phys_space, pos, mp, single=True
+            #     )
+            for s in pb.body.shapes:
+                s.group = 0
+
+            for c in collisions:
+                world.viewlines.append(
+                    Ray((pos[0], pos[1]), c)
+                )
+            world.viewlines.sort(key=lambda r: r.angle, reverse=True)
+        # for ls, pos in sets:
+        # for s in p_shapes:
+        # print(collisions)
+
+
+class Ray:
+    def __init__(self, p1, p2):
+        self.p1, self.p2 = p1, p2
+        self.angle = get_angle(*p1, *p2)
 
 
 class BaseSystem(System):

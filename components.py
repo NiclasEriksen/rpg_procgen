@@ -267,3 +267,8 @@ class FollowTarget(object):
     def __init__(self):
         self.who = None
         self.range = 60
+
+
+class LightSource(object):
+    def __init__(self):
+        self.intensity = 100

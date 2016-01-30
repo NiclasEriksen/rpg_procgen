@@ -72,8 +72,48 @@ class GameWorld(World):
             )
             self.enemies.append(e)
 
+        body = pymunk.Body()
+        body.position = (0, 500)
+        shape = pymunk.Segment(body, (0, -500), (0, 500), 5)
+        shape.group = 0
+        self.phys_space.add(shape)
+        body = pymunk.Body()
+        body.position = (1200, 500)
+        shape = pymunk.Segment(body, (0, -500), (0, 500), 5)
+        shape.group = 0
+        self.phys_space.add(shape)
+        body = pymunk.Body()
+        body.position = (600, 0)
+        shape = pymunk.Segment(body, (-600, 0), (600, 0), 5)
+        shape.group = 0
+        self.phys_space.add(shape)
+        body = pymunk.Body()
+        body.position = (600, 1000)
+        shape = pymunk.Segment(body, (-600, 0), (600, 0), 5)
+        shape.group = 0
+        self.phys_space.add(shape)
+
+        body = pymunk.Body()
+        body.position = (300, 400)
+        box_points = [(-300, -20), (-300, 20), (300, 20), (300, -20)]
+        shape = pymunk.Poly(body, box_points, (0, 0))
+        shape.group = 0
+        self.phys_space.add(shape)
+
+        for i in range(10):
+            body = pymunk.Body()
+            body.position = random.randrange(20, 1000), random.randrange(20, 700)
+            box_points = [(-16, -16), (-16, 16), (16, 16), (16, -16)]
+            shape = pymunk.Poly(body, box_points, (0, 0))
+            # shape.group = 1
+            self.phys_space.add(shape)
+            # w.body = body
+
+
         self.spawn_player()
         self.e.followtarget.who = self.p
+
+        self.viewlines = []
 
     def spawn_player(self, point=(0, 0)):
         # self.player = Mage(
@@ -82,6 +122,7 @@ class GameWorld(World):
         # )
 
         self.p = Player(self)
+        self.p.position.set(80, 80)
         # if hasattr(self.p, "input"):
         #     delattr(self.p, "input")
         # delattr(self.p, "input")
@@ -190,7 +231,8 @@ class GameWindow(pyglet.window.Window):  # Main game window
         gl_template = pyglet.gl.Config(
             sample_buffers=1,
             samples=2,
-            alpha_size=8
+            alpha_size=8,
+            stencil_size=8
             )
         try:  # to enable multisampling
             gl_config = screen.get_best_config(gl_template)
@@ -212,6 +254,9 @@ class GameWindow(pyglet.window.Window):  # Main game window
             self.width, self.height = 1280, 720
 
         self.offset_x, self.offset_y = 640, 360
+
+        self.buffers = pyglet.image.get_buffer_manager()
+        self.s_buffer = self.buffers.get_buffer_mask()
 
 
 if __name__ == "__main__":
@@ -242,6 +287,7 @@ if __name__ == "__main__":
     appworld.add_system(WindowPosSystem(appworld))
     appworld.add_system(SpritePosSystem(appworld))
     appworld.add_system(CleanupClickSystem(appworld))
+    appworld.add_system(LightingSystem(appworld))
     appworld.add_system(RenderSystem(appworld))
 
     # Schedule the update function on the world to run every frame.
