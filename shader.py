@@ -12,7 +12,7 @@ pyglet.options['debug_gl'] = True
 class Shader:
     # vert, frag and geom take arrays of source strings
     # the arrays will be concattenated into one string by OpenGL
-    def __init__(self, vert = [], frag = [], geom = []):
+    def __init__(self, vert=[], frag=[], geom=[]):
         # create the program handle
         self.handle = glCreateProgram()
         # we are not linked yet

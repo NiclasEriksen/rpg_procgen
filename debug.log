@@ -1,233 +1,28 @@
-16:06:55,483 __main__ DEBUG Importing game modules...
-16:06:55,745 __main__ DEBUG Done.
-16:06:55,747 __main__ DEBUG Creating OpenGL context
-16:06:55,750 __main__ DEBUG Subclassing pyglet window, setting parameters.
-16:06:55,756 __main__ DEBUG Not fullscreen, setting screen resolution to 1440x900.
-16:06:55,756 __main__ DEBUG Centering window on screen.
-16:06:55,758 __main__ DEBUG Loading textures from folder "resources".
-16:06:55,758 __main__ INFO Loading textures...
-16:06:55,773 __main__ INFO Done, 11 textures loaded.
-16:06:55,773 __main__ INFO Loading animations...
-16:06:56,187 __main__ INFO Finished loading 14 animations.
-16:06:56,187 __main__ INFO Loading player animations...
-16:06:56,189 __main__ INFO Finished loading player animations.
-16:06:56,203 __main__ ERROR No map files found!
-16:06:56,203 __main__ INFO Starting new game...
-16:06:56,204 __main__ ERROR No such dungeon config item: loot_ilvl_range
-16:06:56,204 __main__ ERROR No such dungeon config item: lvl_req
-16:06:56,204 __main__ ERROR No such dungeon config item: enemy_lvl_range
-16:06:56,204 __main__ INFO Generating dungeon of size 100 by 70 squares...
-16:06:56,212 __main__ DEBUG Room not suitable for pillars.
-16:06:56,212 __main__ DEBUG Room not suitable for pillars.
-16:06:56,212 __main__ DEBUG Room not suitable for pillars.
-16:06:56,213 __main__ DEBUG Room not suitable for pillars.
-16:06:56,213 __main__ DEBUG Room not suitable for pillars.
-16:06:56,213 __main__ DEBUG Room not suitable for pillars.
-16:06:56,213 __main__ DEBUG Room not suitable for pillars.
-16:06:56,213 __main__ DEBUG Room not suitable for pillars.
-16:06:56,213 __main__ DEBUG Room not suitable for pillars.
-16:06:56,517 __main__ INFO Done, 30 rooms added.
-16:06:56,534 __main__ INFO Generating dungeon graphics...
-16:07:00,936 PIL.PngImagePlugin DEBUG STREAM b'IHDR' 16 13
-16:07:00,936 PIL.PngImagePlugin DEBUG STREAM b'bKGD' 41 6
-16:07:00,936 PIL.PngImagePlugin DEBUG b'bKGD' 41 6 (unknown)
-16:07:00,936 PIL.PngImagePlugin DEBUG STREAM b'pHYs' 59 9
-16:07:00,936 PIL.PngImagePlugin DEBUG STREAM b'tIME' 80 7
-16:07:00,936 PIL.PngImagePlugin DEBUG b'tIME' 80 7 (unknown)
-16:07:00,936 PIL.PngImagePlugin DEBUG STREAM b'IDAT' 99 8192
-16:07:00,937 PIL.PngImagePlugin DEBUG STREAM b'IHDR' 16 13
-16:07:00,937 PIL.PngImagePlugin DEBUG STREAM b'bKGD' 41 6
-16:07:00,937 PIL.PngImagePlugin DEBUG b'bKGD' 41 6 (unknown)
-16:07:00,937 PIL.PngImagePlugin DEBUG STREAM b'pHYs' 59 9
-16:07:00,937 PIL.PngImagePlugin DEBUG STREAM b'tIME' 80 7
-16:07:00,937 PIL.PngImagePlugin DEBUG b'tIME' 80 7 (unknown)
-16:07:00,937 PIL.PngImagePlugin DEBUG STREAM b'IDAT' 99 8192
-16:07:02,285 __main__ INFO Done.
-16:07:02,285 __main__ INFO Spawning player...
-16:07:02,285 root DEBUG Adding sprite to player.
-16:07:02,288 root DEBUG Player hp, mana and stamina restored to full status.
-16:07:02,289 __main__ INFO Done.
-16:07:02,516 root DEBUG Player equipped item Shitty Sword 1 in slot weapon_l.
-16:07:02,516 root DEBUG Player equipped item Shitty Armor 1 in slot torso.
-16:07:02,516 root DEBUG Player equipped item Shitty Ring 1 in slot acc_1.
-16:07:02,516 root DEBUG Player hp, mana and stamina restored to full status.
-16:07:02,516 __main__ INFO Spawning enemies...
-16:07:02,517 root DEBUG Adding sprite to enemy.
-16:07:02,519 root DEBUG Adding sprite to enemy.
-16:07:02,520 root DEBUG Adding sprite to enemy.
-16:07:02,521 root DEBUG Adding sprite to enemy.
-16:07:02,522 root DEBUG Adding sprite to enemy.
-16:07:02,523 root DEBUG Adding sprite to enemy.
-16:07:02,524 root DEBUG Adding sprite to enemy.
-16:07:02,526 root DEBUG Adding sprite to enemy.
-16:07:02,527 root DEBUG Adding sprite to enemy.
-16:07:02,528 root DEBUG Adding sprite to enemy.
-16:07:02,529 root DEBUG Adding sprite to enemy.
-16:07:02,531 root DEBUG Adding sprite to enemy.
-16:07:02,533 root DEBUG Adding sprite to enemy.
-16:07:02,534 root DEBUG Adding sprite to enemy.
-16:07:02,535 root DEBUG Adding sprite to enemy.
-16:07:02,536 root DEBUG Adding sprite to enemy.
-16:07:02,538 root DEBUG Adding sprite to enemy.
-16:07:02,539 root DEBUG Adding sprite to enemy.
-16:07:02,541 root DEBUG Adding sprite to enemy.
-16:07:02,542 root DEBUG Adding sprite to enemy.
-16:07:02,543 root DEBUG Adding sprite to enemy.
-16:07:02,545 root DEBUG Adding sprite to enemy.
-16:07:02,547 root DEBUG Adding sprite to enemy.
-16:07:02,548 root DEBUG Adding sprite to enemy.
-16:07:02,549 root DEBUG Adding sprite to enemy.
-16:07:02,550 root DEBUG Adding sprite to enemy.
-16:07:02,552 root DEBUG Adding sprite to enemy.
-16:07:02,553 root DEBUG Adding sprite to enemy.
-16:07:02,555 root DEBUG Adding sprite to enemy.
-16:07:02,556 root DEBUG Adding sprite to enemy.
-16:07:02,557 root DEBUG Adding sprite to enemy.
-16:07:02,558 root DEBUG Adding sprite to enemy.
-16:07:02,559 root DEBUG Adding sprite to enemy.
-16:07:02,561 __main__ INFO Done.
-16:07:02,561 __main__ INFO Game successfully loaded.
-16:07:10,73 __main__ INFO Starting new game...
-16:07:10,74 __main__ ERROR No such dungeon config item: loot_ilvl_range
-16:07:10,75 __main__ ERROR No such dungeon config item: lvl_req
-16:07:10,75 __main__ ERROR No such dungeon config item: enemy_lvl_range
-16:07:10,98 __main__ INFO Generating dungeon of size 100 by 70 squares...
-16:07:10,104 __main__ DEBUG Room not suitable for pillars.
-16:07:10,104 __main__ DEBUG Room not suitable for pillars.
-16:07:10,104 __main__ DEBUG Room not suitable for pillars.
-16:07:10,104 __main__ DEBUG Room not suitable for pillars.
-16:07:10,104 __main__ DEBUG Room not suitable for pillars.
-16:07:10,104 __main__ DEBUG Room not suitable for pillars.
-16:07:10,105 __main__ DEBUG Room not suitable for pillars.
-16:07:10,447 __main__ INFO Done, 30 rooms added.
-16:07:10,484 __main__ INFO Generating dungeon graphics...
-16:07:14,660 PIL.PngImagePlugin DEBUG STREAM b'IHDR' 16 13
-16:07:14,660 PIL.PngImagePlugin DEBUG STREAM b'bKGD' 41 6
-16:07:14,660 PIL.PngImagePlugin DEBUG b'bKGD' 41 6 (unknown)
-16:07:14,660 PIL.PngImagePlugin DEBUG STREAM b'pHYs' 59 9
-16:07:14,661 PIL.PngImagePlugin DEBUG STREAM b'tIME' 80 7
-16:07:14,661 PIL.PngImagePlugin DEBUG b'tIME' 80 7 (unknown)
-16:07:14,661 PIL.PngImagePlugin DEBUG STREAM b'IDAT' 99 8192
-16:07:14,661 PIL.PngImagePlugin DEBUG STREAM b'IHDR' 16 13
-16:07:14,661 PIL.PngImagePlugin DEBUG STREAM b'bKGD' 41 6
-16:07:14,661 PIL.PngImagePlugin DEBUG b'bKGD' 41 6 (unknown)
-16:07:14,661 PIL.PngImagePlugin DEBUG STREAM b'pHYs' 59 9
-16:07:14,661 PIL.PngImagePlugin DEBUG STREAM b'tIME' 80 7
-16:07:14,661 PIL.PngImagePlugin DEBUG b'tIME' 80 7 (unknown)
-16:07:14,661 PIL.PngImagePlugin DEBUG STREAM b'IDAT' 99 8192
-16:07:15,957 __main__ INFO Done.
-16:07:15,957 __main__ INFO Spawning player...
-16:07:15,957 root DEBUG Adding sprite to player.
-16:07:15,959 root DEBUG Player hp, mana and stamina restored to full status.
-16:07:15,960 __main__ INFO Done.
-16:07:16,187 root DEBUG Player equipped item Shitty Sword 1 in slot weapon_l.
-16:07:16,187 root DEBUG Player equipped item Shitty Armor 1 in slot torso.
-16:07:16,187 root DEBUG Player equipped item Shitty Ring 1 in slot acc_1.
-16:07:16,187 root DEBUG Player hp, mana and stamina restored to full status.
-16:07:16,187 __main__ INFO Spawning enemies...
-16:07:16,188 root DEBUG Adding sprite to enemy.
-16:07:16,189 root DEBUG Adding sprite to enemy.
-16:07:16,190 root DEBUG Adding sprite to enemy.
-16:07:16,191 root DEBUG Adding sprite to enemy.
-16:07:16,193 root DEBUG Adding sprite to enemy.
-16:07:16,194 root DEBUG Adding sprite to enemy.
-16:07:16,195 root DEBUG Adding sprite to enemy.
-16:07:16,197 root DEBUG Adding sprite to enemy.
-16:07:16,198 root DEBUG Adding sprite to enemy.
-16:07:16,199 root DEBUG Adding sprite to enemy.
-16:07:16,201 root DEBUG Adding sprite to enemy.
-16:07:16,202 root DEBUG Adding sprite to enemy.
-16:07:16,204 root DEBUG Adding sprite to enemy.
-16:07:16,205 root DEBUG Adding sprite to enemy.
-16:07:16,206 root DEBUG Adding sprite to enemy.
-16:07:16,207 root DEBUG Adding sprite to enemy.
-16:07:16,208 root DEBUG Adding sprite to enemy.
-16:07:16,209 root DEBUG Adding sprite to enemy.
-16:07:16,210 root DEBUG Adding sprite to enemy.
-16:07:16,211 root DEBUG Adding sprite to enemy.
-16:07:16,212 root DEBUG Adding sprite to enemy.
-16:07:16,214 root DEBUG Adding sprite to enemy.
-16:07:16,216 root DEBUG Adding sprite to enemy.
-16:07:16,218 root DEBUG Adding sprite to enemy.
-16:07:16,219 root DEBUG Adding sprite to enemy.
-16:07:16,220 root DEBUG Adding sprite to enemy.
-16:07:16,221 root DEBUG Adding sprite to enemy.
-16:07:16,223 root DEBUG Adding sprite to enemy.
-16:07:16,224 root DEBUG Adding sprite to enemy.
-16:07:16,225 root DEBUG Adding sprite to enemy.
-16:07:16,226 root DEBUG Adding sprite to enemy.
-16:07:16,227 root DEBUG Adding sprite to enemy.
-16:07:16,229 __main__ INFO Done.
-16:07:16,229 __main__ INFO Game successfully loaded.
-16:07:30,979 __main__ INFO Starting new game...
-16:07:30,980 __main__ ERROR No such dungeon config item: loot_ilvl_range
-16:07:30,980 __main__ ERROR No such dungeon config item: lvl_req
-16:07:30,980 __main__ ERROR No such dungeon config item: enemy_lvl_range
-16:07:31,3 __main__ INFO Generating dungeon of size 100 by 70 squares...
-16:07:31,11 __main__ WARNING Failed to add more rooms
-16:07:31,13 __main__ DEBUG Room not suitable for pillars.
-16:07:31,13 __main__ DEBUG Room not suitable for pillars.
-16:07:31,14 __main__ DEBUG Room not suitable for pillars.
-16:07:31,14 __main__ DEBUG Room not suitable for pillars.
-16:07:31,14 __main__ DEBUG Room not suitable for pillars.
-16:07:31,14 __main__ DEBUG Room not suitable for pillars.
-16:07:31,14 __main__ DEBUG Room not suitable for pillars.
-16:07:31,14 __main__ DEBUG Room not suitable for pillars.
-16:07:31,14 __main__ DEBUG Room not suitable for pillars.
-16:07:31,14 __main__ DEBUG Room not suitable for pillars.
-16:07:31,14 __main__ DEBUG Room not suitable for pillars.
-16:07:31,15 __main__ DEBUG Room not suitable for pillars.
-16:07:31,15 __main__ DEBUG Room not suitable for pillars.
-16:07:31,362 __main__ INFO Done, 28 rooms added.
-16:07:31,400 __main__ INFO Generating dungeon graphics...
-16:07:35,571 PIL.PngImagePlugin DEBUG STREAM b'IHDR' 16 13
-16:07:35,571 PIL.PngImagePlugin DEBUG STREAM b'bKGD' 41 6
-16:07:35,571 PIL.PngImagePlugin DEBUG b'bKGD' 41 6 (unknown)
-16:07:35,571 PIL.PngImagePlugin DEBUG STREAM b'pHYs' 59 9
-16:07:35,572 PIL.PngImagePlugin DEBUG STREAM b'tIME' 80 7
-16:07:35,572 PIL.PngImagePlugin DEBUG b'tIME' 80 7 (unknown)
-16:07:35,572 PIL.PngImagePlugin DEBUG STREAM b'IDAT' 99 8192
-16:07:35,572 PIL.PngImagePlugin DEBUG STREAM b'IHDR' 16 13
-16:07:35,572 PIL.PngImagePlugin DEBUG STREAM b'bKGD' 41 6
-16:07:35,572 PIL.PngImagePlugin DEBUG b'bKGD' 41 6 (unknown)
-16:07:35,572 PIL.PngImagePlugin DEBUG STREAM b'pHYs' 59 9
-16:07:35,572 PIL.PngImagePlugin DEBUG STREAM b'tIME' 80 7
-16:07:35,572 PIL.PngImagePlugin DEBUG b'tIME' 80 7 (unknown)
-16:07:35,572 PIL.PngImagePlugin DEBUG STREAM b'IDAT' 99 8192
-16:07:36,844 __main__ INFO Done.
-16:07:36,845 __main__ INFO Spawning player...
-16:07:36,845 root DEBUG Adding sprite to player.
-16:07:36,847 root DEBUG Player hp, mana and stamina restored to full status.
-16:07:36,847 __main__ INFO Done.
-16:07:37,76 root DEBUG Player equipped item Shitty Sword 1 in slot weapon_l.
-16:07:37,77 root DEBUG Player equipped item Shitty Armor 1 in slot torso.
-16:07:37,77 root DEBUG Player equipped item Shitty Ring 1 in slot acc_1.
-16:07:37,77 root DEBUG Player hp, mana and stamina restored to full status.
-16:07:37,77 __main__ INFO Spawning enemies...
-16:07:37,77 root DEBUG Adding sprite to enemy.
-16:07:37,79 root DEBUG Adding sprite to enemy.
-16:07:37,80 root DEBUG Adding sprite to enemy.
-16:07:37,81 root DEBUG Adding sprite to enemy.
-16:07:37,82 root DEBUG Adding sprite to enemy.
-16:07:37,83 root DEBUG Adding sprite to enemy.
-16:07:37,85 root DEBUG Adding sprite to enemy.
-16:07:37,87 root DEBUG Adding sprite to enemy.
-16:07:37,88 root DEBUG Adding sprite to enemy.
-16:07:37,90 root DEBUG Adding sprite to enemy.
-16:07:37,90 root DEBUG Adding sprite to enemy.
-16:07:37,91 root DEBUG Adding sprite to enemy.
-16:07:37,94 root DEBUG Adding sprite to enemy.
-16:07:37,95 root DEBUG Adding sprite to enemy.
-16:07:37,97 root DEBUG Adding sprite to enemy.
-16:07:37,98 root DEBUG Adding sprite to enemy.
-16:07:37,100 root DEBUG Adding sprite to enemy.
-16:07:37,102 root DEBUG Adding sprite to enemy.
-16:07:37,104 root DEBUG Adding sprite to enemy.
-16:07:37,105 root DEBUG Adding sprite to enemy.
-16:07:37,106 root DEBUG Adding sprite to enemy.
-16:07:37,107 root DEBUG Adding sprite to enemy.
-16:07:37,108 root DEBUG Adding sprite to enemy.
-16:07:37,110 root DEBUG Adding sprite to enemy.
-16:07:37,111 __main__ INFO Done.
-16:07:37,111 __main__ INFO Game successfully loaded.
-16:07:40,297 __main__ INFO Exiting...
+17:46:13,544 __main__ ERROR No such dungeon config item: loot_ilvl_range
+17:46:13,544 __main__ ERROR No such dungeon config item: enemy_lvl_range
+17:46:13,545 __main__ ERROR No such dungeon config item: lvl_req
+17:46:13,545 __main__ INFO Generating dungeon of size 50 by 40 squares...
+17:46:13,552 __main__ WARNING Failed to add more rooms
+17:46:13,553 __main__ DEBUG Room not suitable for pillars.
+17:46:13,553 __main__ DEBUG Room not suitable for pillars.
+17:46:13,590 __main__ INFO Done, 11 rooms added.
+17:46:13,590 __main__ INFO Generating dungeon graphics...
+17:46:13,837 PIL.PngImagePlugin DEBUG STREAM b'IHDR' 16 13
+17:46:13,837 PIL.PngImagePlugin DEBUG STREAM b'bKGD' 41 6
+17:46:13,837 PIL.PngImagePlugin DEBUG b'bKGD' 41 6 (unknown)
+17:46:13,837 PIL.PngImagePlugin DEBUG STREAM b'pHYs' 59 9
+17:46:13,837 PIL.PngImagePlugin DEBUG STREAM b'tIME' 80 7
+17:46:13,837 PIL.PngImagePlugin DEBUG b'tIME' 80 7 (unknown)
+17:46:13,837 PIL.PngImagePlugin DEBUG STREAM b'IDAT' 99 8192
+17:46:13,837 PIL.PngImagePlugin DEBUG STREAM b'IHDR' 16 13
+17:46:13,838 PIL.PngImagePlugin DEBUG STREAM b'bKGD' 41 6
+17:46:13,838 PIL.PngImagePlugin DEBUG b'bKGD' 41 6 (unknown)
+17:46:13,838 PIL.PngImagePlugin DEBUG STREAM b'pHYs' 59 9
+17:46:13,838 PIL.PngImagePlugin DEBUG STREAM b'tIME' 80 7
+17:46:13,838 PIL.PngImagePlugin DEBUG b'tIME' 80 7 (unknown)
+17:46:13,838 PIL.PngImagePlugin DEBUG STREAM b'IDAT' 99 8192
+17:46:14,265 __main__ INFO Setup physics space...
+17:46:14,265 __main__ INFO Spawning enemies...
+17:46:14,269 __main__ INFO Generating wall rectangles...
+17:46:24,85 __main__ INFO Placing collidable items...
+17:46:24,85 __main__ INFO Spawning player...

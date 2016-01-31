@@ -4,7 +4,7 @@ import pyglet.sprite
 class Batch(object):
     def __init__(self, batchname):
         self.batch = batchname
-
+        self.group = 0
 
 class Attributes(object):
     def __init__(self):
@@ -193,6 +193,15 @@ class WindowPosition(object):
         self.static = static
 
 
+class HeadBobbing(object):
+    def __init__(self, duration=0.5, amount=3):
+        self.max_offset = amount
+        self.cur_time = 0
+        self.max_time = duration
+        self.offset_y = 0
+        self.settle = False
+
+
 class Velocity(object):
     def __init__(self, x=0, y=0):
         self.x = x
@@ -203,6 +212,31 @@ class Sprite(object):
     def __init__(self, img):
         self.sprite = pyglet.sprite.Sprite(img, subpixel=True)
         self.batchless = False
+
+
+class GlowEffect(object):
+    def __init__(self, img):
+        self.sprite = pyglet.sprite.Sprite(
+            img, subpixel=True
+        )
+        self.sprite.color = (255, 255, 255)
+        self.sprite.opacity = 0
+        self.batchless = False
+
+
+class PulseAnimation(object):
+    def __init__(
+        self, glow_object, frequency=1,
+        max_opacity=1., min_scale=0.8, max_scale=1.2
+    ):
+        self.owner = glow_object
+        self.speed = frequency
+        self.scale_min, self.scale_max = min_scale, max_scale
+        self.max_opacity = max_opacity
+        self.color = glow_object.sprite.color
+        self.max_time = frequency
+        self.cur_time = 0
+        self.settle = False
 
 
 class PhysBody(object):

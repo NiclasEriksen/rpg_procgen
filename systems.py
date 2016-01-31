@@ -4,12 +4,12 @@ import pyglet.graphics
 from pyglet.gl import *
 from pyglet.window import key
 from pymunk import Body as pymunk_body
+from pymunk import BB
 from pymunk import Circle as pymunk_circle
+from pymunk import Poly as pymunk_poly
 from pymunk import moment_for_circle
-from functions import get_dist, get_midpoint, rotate2d, get_angle
+from functions import get_dist, get_midpoint, rotate2d, get_angle, smooth_in_out
 import math
-
-buffers = pyglet.image.get_buffer_manager()
 
 
 class MoveSystem(System):
@@ -33,6 +33,8 @@ class RenderSystem(System):
     def process(self, world, components):
         glClearColor(0.2, 0.2, 0.2, 1)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        glLoadIdentity()
+        glLoadIdentity()
 
         wl = world.viewlines
         if wl:
@@ -110,29 +112,35 @@ class RenderSystem(System):
         )
         glDisable(GL_STENCIL_TEST)
 
-        for k, v in world.batches.items():
-            if k == "enemies":
-                glEnable(GL_STENCIL_TEST)
-                glStencilFunc(GL_EQUAL, 1, 0xFF)
-                v.draw()
-            else:
-                glDisable(GL_STENCIL_TEST)
-                v.draw()
+        # shader.bind()
         for s in components:
             if s.batchless:
-                s.draw()
+                s.sprite.draw()
+        for k, v in world.batches.items():
+            if k == "enemies":
+                if wl:
+                    glEnable(GL_STENCIL_TEST)
+                    glStencilFunc(GL_EQUAL, 1, 0xFF)
+                v.draw()
+                if wl:
+                    glDisable(GL_STENCIL_TEST)
+            else:
+                v.draw()
+        # glUseProgram(0)
+
         if wl:
             glEnable(GL_STENCIL_TEST)
             glStencilFunc(GL_EQUAL, 0, 0xFF)
-            glColor4f(0.1, 0.05, 0.0, 0.9)
-            pyglet.graphics.draw(
-                4, GL_QUADS,
-                ('v2f', [
-                    0, 0, 1600, 0, 1600, 1600, 0, 1600
-                ])
-            )
-        glDisable(GL_BLEND)
+        glColor4f(0.1, 0.1, 0.1, 0.8)
+        pyglet.graphics.draw(
+            4, GL_QUADS,
+            ('v2f', [
+                0, 0, 1600, 0, 1600, 1600, 0, 1600
+            ])
+        )
 
+        glDisable(GL_STENCIL_TEST)
+        # glColor4f(1, 1, 1, 1.)
         # for l in wl:
         #     pyglet.graphics.draw(
         #         2, GL_LINES,
@@ -143,6 +151,7 @@ class RenderSystem(System):
         #             int(l.p2[1]) + int(world.window.offset_y)
         #         ))
         #     )
+        glDisable(GL_BLEND)
 
 
 class MobNamingSystem(System):
@@ -169,6 +178,21 @@ class SpritePosSystem(Applicator):
                 s.sprite.y = pos.y
 
 
+class GlowPosSystem(Applicator):
+    def __init__(self, world):
+        self.is_applicator = True
+        self.componenttypes = (GlowEffect, Sprite)
+
+    def process(self, world, sets):
+        for g, s in sets:
+            # print("sprite: ", s.sprite.x, s.sprite.y)
+            if not (g.sprite.x, g.sprite.y) == (s.sprite.x, s.sprite.y):
+                g.sprite.x = s.sprite.x
+                g.sprite.y = s.sprite.y
+                g.sprite.image.anchor_x = s.sprite.image.anchor_x
+                g.sprite.image.anchor_y = s.sprite.image.anchor_y
+
+
 class StaticSpritePosSystem(Applicator):
     def __init__(self, world):
         self.is_applicator = True
@@ -180,6 +204,73 @@ class StaticSpritePosSystem(Applicator):
             sprite.sprite.y = s_pos.y
             world.window.offset_x += (pos.old_x - pos.x)
             world.window.offset_y += (pos.old_y - pos.y)
+
+
+class StaticGlowEffectPosSystem(Applicator):
+    def __init__(self, world):
+        self.is_applicator = True
+        self.componenttypes = (GlowEffect, Sprite, StaticPosition)
+
+    def process(self, world, sets):
+        for g, s, *rest in sets:
+            g.sprite.x = s.sprite.x
+            g.sprite.y = s.sprite.y
+            g.sprite.image.anchor_x = s.sprite.image.anchor_x
+            g.sprite.image.anchor_y = s.sprite.image.anchor_y
+
+
+class PulseAnimationSystem(Applicator):
+    def __init__(self, world):
+        self.is_applicator = True
+        self.componenttypes = (PulseAnimation,)
+
+    def process(self, world, sets):
+        dt = world.dt
+        for anim, *rest in sets:
+            if anim.cur_time < anim.max_time and not anim.settle:
+                value = smooth_in_out(
+                    anim.cur_time / anim.max_time * 1
+                )
+                anim.owner.sprite.opacity = value * (anim.max_opacity * 255)
+                anim.owner.sprite.scale = anim.scale_min + (
+                    value * (anim.scale_max - anim.scale_min)
+                )
+                anim.cur_time += dt
+            else:
+                anim.cur_time = 0
+
+
+class HeadBobbingSystem(Applicator):
+    def __init__(self, world):
+        self.is_applicator = True
+        self.componenttypes = (HeadBobbing, Sprite, PhysBody)
+
+    def process(self, world, sets):
+        dt = world.dt
+        for hb, s, pb in sets:
+            if pb.body:
+                v = abs(pb.body.velocity.x) + abs(pb.body.velocity.y)
+            else:
+                v = 0
+            if v >= 30:
+                hb.settle = False
+            else:
+                hb.settle = True
+            if hb.cur_time < hb.max_time and not hb.settle:
+                hb.offset_y = hb.max_offset * smooth_in_out(
+                    hb.cur_time / hb.max_time * 1
+                )
+                hb.cur_time += dt
+            else:
+                if hb.settle:
+                    if hb.offset_y > 0:
+                        hb.offset_y -= hb.max_offset * dt * 2
+                    else:
+                        hb.offset_y = 0
+                else:
+                    hb.cur_time = 0
+
+            s.sprite.image.anchor_y = 16 - hb.offset_y
 
 
 class SpriteBatchSystem(Applicator):
@@ -201,6 +292,43 @@ class SpriteBatchSystem(Applicator):
                         )
                         world.batches[b.batch] = pyglet.graphics.Batch()
                         s.sprite.batch = world.batches[b.batch]
+                        s.sprite.group = pyglet.graphics.OrderedGroup(b.group)
+
+
+class GlowBatchSystem(Applicator):
+    def __init__(self, world):
+        self.is_applicator = True
+        self.componenttypes = (GlowEffect, Batch)
+
+    def process(self, world, sets):
+        for s, b in sets:
+            if not s.batchless:
+                if not s.sprite.batch:
+                    try:
+                        s.sprite.batch = world.batches[b.batch]
+                    except KeyError:
+                        print(
+                            "No such batch defined: {0}, creating.".format(
+                                b.batch
+                            )
+                        )
+                        world.batches[b.batch] = pyglet.graphics.Batch()
+                        s.sprite.batch = world.batches[b.batch]
+
+
+# class ApplyGlowEffectSystem(Applicator):
+#     def __init__(self, world):
+#         self.is_applicator = True
+#         self.componenttypes = (GlowEffect,)
+
+#     def process(self, world, sets):
+#         for g, *rest in sets:
+#             if not g.sprite.opacity == g.opacity:
+#                 g.sprite.opacity = g.opacity
+#             if not g.sprite.color == g.color:
+#                 g.sprite.color = g.color
+#             if not g.sprite.scale == g.scale:
+#                 g.sprite.scale = g.scale
 
 
 class PhysicsSystem(System):
@@ -213,8 +341,11 @@ class PhysicsSystem(System):
             world.phys_space.step(world.dt / 10)
         for b, p in sets:
             if not b.body:
-                b.body, shape = self.create_body(b, p)
-                world.phys_space.add(b.body, shape)
+                b.body, shape, static = self.create_body(b, p)
+                if static:
+                    world.phys_space.add(shape)
+                else:
+                    world.phys_space.add(b.body, shape)
             else:
                 p.set(*b.body.position)
                 if abs(b.body.velocity.x) + abs(b.body.velocity.y) <= 0.1:
@@ -231,15 +362,23 @@ class PhysicsSystem(System):
 
     def create_body(self, b, p):
         if b.shape == "circle":
+            static = False
             inertia = moment_for_circle(b.mass, 0, b.width / 2, (0, 0))
             body = pymunk_body(b.mass, inertia)
             body.position = (p.x, p.y)
             shape = pymunk_circle(body, b.width / 2, (0, 0))
             shape.elasticity = 0.2
             shape.group = 0
+        elif b.shape == "square":
+            static = True
+            body = pymunk_body()
+            w, h = b.width, b.height
+            body.position = p.x, p.y
+            box_points = [(0, 0), (0, h), (w, h), (w, 0)]
+            shape = pymunk_poly(body, box_points, (0, 0))
         else:
             raise PhysicsError("No method to handle {0}".format(b.shape))
-        return body, shape
+        return body, shape, static
 
     def cleanup_bodies(self, world, checklist):
         for body in world.phys_space.bodies:
@@ -498,7 +637,7 @@ class LightingSystem(System):
 
     def cast_ray(self, phys_space, origin, target, single=False):
         collisions = []
-        view_dist = 1750
+        view_dist = 500
         a_offset = 0.00001
         col_group = 2
         a = -get_angle(*origin, *target)
@@ -535,7 +674,7 @@ class LightingSystem(System):
         return collisions
 
     def process(self, world, sets):
-        p_shapes = world.phys_space.shapes
+        dist = 520
         world.viewlines = []
         midpoints = []
         collisions = []
@@ -553,6 +692,13 @@ class LightingSystem(System):
 
         for ls, pb in sets:
             pos = (pb.body.position.x, pb.body.position.y)
+            bb = BB(
+                (pos[0] - dist),
+                (pos[1] - dist),
+                (pos[0] + dist),
+                (pos[1] + dist)
+            )
+            p_shapes = world.phys_space.bb_query(bb)
             for s in pb.body.shapes:
                 s.group = 2
                 p_shapes.remove(s)

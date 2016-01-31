@@ -1,15 +1,32 @@
 from utils.ebs import World
 import os
 import random
+import logging
+from load_config import ConfigSectionMap as load_cfg
 from collections import OrderedDict
 import pyglet
 import pymunk
 from functions import center_image
+from image_generator import grid_to_image
 from components import *
 from systems import *
 from entities import *
+from dungeon_generator import DungeonGenerator
 pyglet.options['debug_gl'] = False
 
+# Logging
+logging.basicConfig(
+    filename='debug.log',
+    filemode='w',
+    format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+    datefmt='%H:%M:%S',
+    level=logging.DEBUG
+)
+logger = logging.getLogger(__name__)
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+logger.addHandler(ch)
+logger.setLevel(logging.DEBUG)
 
 # GLOBAL VARIABLES
 ROOT = os.path.dirname(__file__)
@@ -43,12 +60,18 @@ pyglet.clock.set_fps_limit(FPS)
 class GameWorld(World):
     def __init__(self):
         super().__init__()
+        self.cfg = load_cfg("Game")
         # Initialize a window
         self.window = GameWindow()
         # Forward window events to gameworld
         self.window.on_mouse_motion = self.on_mouse_motion
         self.window.on_mouse_press = self.on_mouse_press
+        self.window.on_mouse_scroll = self.on_mouse_scroll
         self.window.on_key_press = self.on_key_press
+        self.window.on_resize = self.on_resize
+
+        # Set default zoom
+        self.zoom_factor = 2
 
         # Create batches and load textures
         self.batches = OrderedDict()
@@ -58,79 +81,95 @@ class GameWorld(World):
         self.input_keys = pyglet.window.key.KeyStateHandler()
         self.window.push_handlers(self.input_keys)
 
+        # Setup dungeon configuration
+        dungeon_cfg = load_cfg("Dungeon1")
+        self.dungeon = DungeonGenerator(
+            logger,
+            dungeon_cfg
+        )
+
+        self.game_size = (
+            dungeon_cfg["dungeon_size"][0] * 32,
+            dungeon_cfg["dungeon_size"][1] * 32
+        )
+
+        self.dungeon.generate()
+
+        logger.info("Generating dungeon graphics...")
+        img_grid = self.dungeon.get_tilemap()
+
+        grid_to_image(
+            img_grid, "dungeon", self.game_size
+        )
+
+        dungeon_texture = self.load_single_texture(
+            "dungeon"
+        )
+        dungeon_overlay_texture = self.load_single_texture(
+            "dungeon_overlay"
+        )
+
+        self.bg = BG(self, dungeon_texture)
+        self.fg = FG(self, dungeon_overlay_texture)
+        self.bg.batch = Batch("dungeon")
+        self.bg.batch.group = 0
+        self.bg.position.set(0, 0)
+        self.fg.batch = Batch("dungeon")
+        self.fg.batch.group = 1
+        self.fg.position.set(0, 0)
+
+        logger.info("Setup physics space...")
         # Make physical space for physics engine
         self.phys_space = pymunk.Space()
         self.phys_space.damping = 0.001
 
         # Add entities to the world
-        self.e = Enemy(self)
+        logger.info("Spawning enemies...")
         self.enemies = []
-        for i in range(10):
-            e = Enemy(self)
-            e.position.set(
-                random.randrange(20, 1000), random.randrange(20, 700)
-            )
-            self.enemies.append(e)
+        for r in self.dungeon.enemy_rooms:
+            for spawn in r.spawn_locations:
+                x, y = spawn[0] * 32, spawn[1] * 32
+                e = Enemy(self)
+                e.position.set(x, y)
+                self.enemies.append(e)
 
-        body = pymunk.Body()
-        body.position = (0, 500)
-        shape = pymunk.Segment(body, (0, -500), (0, 500), 5)
-        shape.group = 0
-        self.phys_space.add(shape)
-        body = pymunk.Body()
-        body.position = (1200, 500)
-        shape = pymunk.Segment(body, (0, -500), (0, 500), 5)
-        shape.group = 0
-        self.phys_space.add(shape)
-        body = pymunk.Body()
-        body.position = (600, 0)
-        shape = pymunk.Segment(body, (-600, 0), (600, 0), 5)
-        shape.group = 0
-        self.phys_space.add(shape)
-        body = pymunk.Body()
-        body.position = (600, 1000)
-        shape = pymunk.Segment(body, (-600, 0), (600, 0), 5)
-        shape.group = 0
-        self.phys_space.add(shape)
+        logger.info("Generating wall rectangles...")
+        self.wall_rects = self.dungeon.generate_wall_grid()
+        self.walls = []
+        for w in self.wall_rects:
+            p1, p2 = w
+            x = (p1[0] * 32)
+            y = (p1[1] * 32)
+            w = p2[0] * 32 - p1[0] * 32 + 32
+            h = p2[1] * 32 - p1[1] * 32 + 32
+            # print(p1, p2, x, y, w, h)
+            wa = Wall(self)
+            wa.physbody = PhysBody(shape="square", width=w, height=h)
+            wa.position.set(x, y)
+            self.walls.append(wa)
 
-        body = pymunk.Body()
-        body.position = (300, 400)
-        box_points = [(-300, -20), (-300, 20), (300, 20), (300, -20)]
-        shape = pymunk.Poly(body, box_points, (0, 0))
-        shape.group = 0
-        self.phys_space.add(shape)
+        logger.info("Placing collidable items...")
+        # self.collidable = []
+        # for c in self.dungeon.collidable:
+        #     print(c.p1)
+        #     co = Wall(self)
+        #     co.physbody = PhysBody(shape="square", width=32, height=32)
+        #     co.position.set(*c.p1)
+        #     self.collidable.append(co)
 
-        for i in range(10):
-            body = pymunk.Body()
-            body.position = random.randrange(20, 1000), random.randrange(20, 700)
-            box_points = [(-16, -16), (-16, 16), (16, 16), (16, -16)]
-            shape = pymunk.Poly(body, box_points, (0, 0))
-            # shape.group = 1
-            self.phys_space.add(shape)
-            # w.body = body
-
-
+        logger.info("Spawning player...")
         self.spawn_player()
+        self.e = Enemy(self)
+        self.e.position.set(self.p.position.x + 32, self.p.position.y)
         self.e.followtarget.who = self.p
 
         self.viewlines = []
 
     def spawn_player(self, point=(0, 0)):
-        # self.player = Mage(
-        #     self, window=self.window,
-        #     x=point[0], y=point[1]
-        # )
-
         self.p = Player(self)
-        self.p.position.set(80, 80)
-        # if hasattr(self.p, "input"):
-        #     delattr(self.p, "input")
-        # delattr(self.p, "input")
-        # self.window.set_offset(
-        #     self.player.windowpos[0] - self.player.x,
-        #     self.player.windowpos[1] - self.player.y,
-
-        # )
+        c = self.dungeon.startroom.center
+        x, y = c[0] * 32, c[1] * 32
+        self.p.position.set(x, y)
 
     def load_textures(self):
         goblin_img = center_image(
@@ -139,11 +178,31 @@ class GameWorld(World):
         player_body_img = center_image(
             pyglet.image.load('resources/player_body.png')
         )
+        player_body_glow_img = center_image(
+            pyglet.image.load('resources/player_body_glow.png')
+        )
+        wall_img = center_image(
+            pyglet.image.load('resources/wall.png')
+        )
+        bg_img = center_image(
+            pyglet.image.load('resources/bg.png')
+        )
 
         self.textures = dict(
             enemy=goblin_img,
             player=player_body_img,
+            player_glow=player_body_glow_img,
+            wall=wall_img,
+            bg=bg_img
         )
+
+    def load_single_texture(self, name, center=False):
+        if center:
+            return center_image(
+                pyglet.image.load(os.path.join(RES_PATH, name + '.png'))
+            )
+        else:
+            return pyglet.image.load(os.path.join(RES_PATH, name + '.png'))
 
     def get_player(self):
         return self.p
@@ -166,6 +225,30 @@ class GameWorld(World):
         # print current mouse position
         # print(x, y)
 
+    def on_resize(self, width, height):
+        glViewport(0, 0, width, height)
+        self.update_ortho(width, height)
+        # glMatrixMode(gl.GL_MODELVIEW)
+        # glLoadIdentity()
+        return pyglet.event.EVENT_HANDLED
+
+    def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
+        if scroll_y == 1 and self.zoom_factor < 5:
+            self.zoom_factor += 0.5
+        elif scroll_y == -1 and self.zoom_factor > 1:
+            self.zoom_factor -= 0.5
+        self.update_ortho(self.window.width, self.window.height)
+
+    def update_ortho(self, w, h):
+        lessen_w = int((w - (w / self.zoom_factor)) / 2)
+        lessen_h = int(lessen_w * (h / w))
+
+        glMatrixMode(gl.GL_PROJECTION)
+        glLoadIdentity()
+        glOrtho(lessen_w, w - lessen_w, lessen_h, h - lessen_h, -1, 1)
+        glMatrixMode(gl.GL_MODELVIEW)
+        glLoadIdentity()
+
     def on_mouse_press(self, x, y, button, modifiers):
         # pass
         # when a user presses a mouse button, print which one and mousepos
@@ -177,6 +260,13 @@ class GameWorld(World):
         if k == key.ESCAPE:
             # logger.info("Exiting...")
             pyglet.app.exit()
+
+        if k == key._1:
+            self.zoom_factor = 1
+        if k == key._2:
+            self.zoom_factor = 2
+        if k == key._3:
+            self.zoom_factor = 3
 
         if k == key.F2:
             e = [None]
@@ -206,6 +296,12 @@ class GameWorld(World):
                 self.window.offset_x = 640 - self.p.position.x
                 self.window.offset_y = 360 - self.p.position.y
                 delattr(self.p, "windowposition")
+
+        if k == key.F5:
+            if getattr(self.p, "lightsource"):
+                delattr(self.p, "lightsource")
+            else:
+                self.p.lightsource = LightSource()
 
         c = self.get_components(KeyboardControlled)
         e = None
@@ -255,9 +351,6 @@ class GameWindow(pyglet.window.Window):  # Main game window
 
         self.offset_x, self.offset_y = 640, 360
 
-        self.buffers = pyglet.image.get_buffer_manager()
-        self.s_buffer = self.buffers.get_buffer_mask()
-
 
 if __name__ == "__main__":
     # Initialize world
@@ -277,15 +370,20 @@ if __name__ == "__main__":
     appworld.add_system(ApplyMovementSpeedSystem(appworld))
     appworld.add_system(LevelUpSystem(appworld))
     appworld.add_system(MobNamingSystem(appworld))
+    appworld.add_system(GlowBatchSystem(appworld))
     appworld.add_system(SpriteBatchSystem(appworld))
     appworld.add_system(InputMovementSystem(appworld))
+    appworld.add_system(HeadBobbingSystem(appworld))
     appworld.add_system(MoveSystem(appworld))
     appworld.add_system(FollowSystem(appworld))
     appworld.add_system(PhysicsSystem(appworld))
     appworld.add_system(TargetMobSystem(appworld))
     appworld.add_system(StaticSpritePosSystem(appworld))
+    appworld.add_system(StaticGlowEffectPosSystem(appworld))
     appworld.add_system(WindowPosSystem(appworld))
     appworld.add_system(SpritePosSystem(appworld))
+    appworld.add_system(GlowPosSystem(appworld))
+    appworld.add_system(PulseAnimationSystem(appworld))
     appworld.add_system(CleanupClickSystem(appworld))
     appworld.add_system(LightingSystem(appworld))
     appworld.add_system(RenderSystem(appworld))

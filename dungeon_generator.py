@@ -2,6 +2,8 @@ import math
 import random
 from functions import *
 from spanning_tree import get_connections
+import gridmancer
+import numpy as np
 from collections import Counter
 
 
@@ -265,6 +267,40 @@ class DungeonGenerator:
         for w in walls:
             self.walls.append(Wall(w[0], w[1]))
 
+    def generate_wall_grid(self):
+        cols, rows = self.config["dungeon_size"]
+        # print(cols, rows)
+        # print(self.walls)
+        array = [[0 for x in range(cols)] for x in range(rows)]
+        # print(len(array), len(array[0]))
+        for w in self.walls:
+            x, y = w.gx, w.gy
+            # print(x, y)
+            array[y][x] = -1
+
+        # print(array)
+        array, rect_count = gridmancer.grid_reduce(grid=array)
+        # print("--------")
+        # print(array)
+        minimal_grid = np.array(array)
+        rects = []
+        for i in range(rect_count):
+            rects.append(np.asarray(np.where(minimal_grid == i + 1)).T.tolist())
+
+        # print(rect_count, len(rects))
+        final_sets = []
+        for r in rects:
+            final_sets.append(
+                [
+                    (r[0][1], r[0][0]),
+                    (r[-1][1], r[-1][0])
+                ]
+            )
+        return final_sets
+
+        # print(minimal_grid)
+        # return minimal_grid
+
     def generate_pillars(self, room):
         w, h = room.w, room.h
         x, y = room.x1, room.y1
@@ -439,6 +475,7 @@ class Wall(Collidable):
         y1 = y
         x2 = x + 32
         y2 = y + 32
+        self.gx, self.gy = gx, gy
         self.p1, self.p2 = (x1, y1), (x2, y2)
         self.center = x + 16, y + 16
         # self.vertices = [

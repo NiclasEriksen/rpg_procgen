@@ -6,12 +6,15 @@ class Player(Entity):
     def __init__(self, world):
         self.isplayer = IsPlayer()
         self.charname = CharName(name="Player")
+        self.gloweffect = GlowEffect(world.textures["player_glow"])
         self.sprite = Sprite(world.textures["player"])
         self.batch = Batch("player")
 
         self.physbody = PhysBody()
         self.position = Position()
+        self.headbobbing = HeadBobbing()
         self.lightsource = LightSource()
+        self.pulseanimation = PulseAnimation(self.gloweffect)
         self.staticposition = StaticPosition(x=640, y=360)
         self.movement = Movement()
         self.input = Input()
@@ -36,6 +39,30 @@ class Player(Entity):
         self.autoattacktarget = AutoAttackTarget()
 
 
+class Wall(Entity):
+    def __init__(self, world):
+        self.windowposition = WindowPosition()
+        self.position = Position()
+        # self.sprite = Sprite(world.textures["wall"])
+        # self.batch = Batch("walls")
+
+
+class BG(Entity):
+    def __init__(self, world, img):
+        self.windowposition = WindowPosition()
+        self.position = Position()
+        self.sprite = Sprite(img)
+        self.sprite.batchless = True
+
+
+class FG(Entity):
+    def __init__(self, world, img):
+        self.windowposition = WindowPosition()
+        self.position = Position()
+        self.sprite = Sprite(img)
+        self.sprite.batchless = True
+
+
 class Enemy(Entity):
     def __init__(self, world):
         self.charname = CharName()
@@ -45,7 +72,8 @@ class Enemy(Entity):
         self.movement = Movement()
         self.followtarget = FollowTarget()
         self.sprite = Sprite(world.textures["enemy"])
-        self.batch = Batch("creatures")
+        self.pulseanimation = PulseAnimation(self.sprite)
+        self.batch = Batch("enemies")
         self.ismob = IsMob()
         self.level = Level()
         self.hp = HP()
