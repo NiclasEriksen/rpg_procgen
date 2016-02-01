@@ -1,6 +1,7 @@
 from utils.ebs import World
 import os
-import random
+# import random
+import time
 import logging
 from load_config import ConfigSectionMap as load_cfg
 from collections import OrderedDict
@@ -59,7 +60,7 @@ pyglet.clock.set_fps_limit(FPS)
 
 class GameWorld(World):
     def __init__(self):
-        super().__init__()
+        loadstart = time.clock()
         self.cfg = load_cfg("Game")
         # Initialize a window
         self.window = GameWindow()
@@ -71,18 +72,35 @@ class GameWorld(World):
         self.window.on_resize = self.on_resize
 
         # Set default zoom
-        self.zoom_factor = 2
-
-        # Create batches and load textures
-        self.batches = OrderedDict()
-        self.load_textures()
+        self.view_area = (
+            0, self.window.width, 0, self.window.height
+        )
+        self.zoom_factor = 1.
 
         # Create a keyboard input handler for pyglet window
         self.input_keys = pyglet.window.key.KeyStateHandler()
         self.window.push_handlers(self.input_keys)
 
+        self.new_game(load=True)
+        end = time.clock()
+        logger.info("Game loaded in {:.3f}s.".format(end - loadstart))
+
+    def new_game(self, load=False):
+        super().__init__()
+        self.start_systems()
+        # self.components = {}
+        self.window.offset_x, self.window.offset_y = 640, 360
+        # Create batches and load textures
+        logger.info("Loading textures...")
+        start = time.clock()
+        self.batches = OrderedDict()
+        self.load_textures()
+        end = time.clock()
+        logger.info("Done, {:.3f}s.".format(end - start))
         # Setup dungeon configuration
-        dungeon_cfg = load_cfg("Dungeon1")
+        logger.info("Building dungeon...")
+        start = time.clock()
+        dungeon_cfg = load_cfg("Dungeon2")
         self.dungeon = DungeonGenerator(
             logger,
             dungeon_cfg
@@ -93,14 +111,26 @@ class GameWorld(World):
             dungeon_cfg["dungeon_size"][1] * 32
         )
 
-        self.dungeon.generate()
+        if load:
+            self.dungeon.load("saved.json")
+        else:
+            self.dungeon.generate()
+        end = time.clock()
+        logger.info("Done, {:.3f}s.".format(end - start))
+
+        if not load:
+            self.dungeon.save("saved.json")
 
         logger.info("Generating dungeon graphics...")
-        img_grid = self.dungeon.get_tilemap()
+        start = time.clock()
+        if load:
+            pass
+        else:
+            img_grid = self.dungeon.get_tilemap()
 
-        grid_to_image(
-            img_grid, "dungeon", self.game_size
-        )
+            grid_to_image(
+                img_grid, "dungeon", self.game_size
+            )
 
         dungeon_texture = self.load_single_texture(
             "dungeon"
@@ -117,14 +147,20 @@ class GameWorld(World):
         self.fg.batch = Batch("dungeon")
         self.fg.batch.group = 1
         self.fg.position.set(0, 0)
+        end = time.clock()
+        logger.info("Done, {:.3f}s.".format(end - start))
 
-        logger.info("Setup physics space...")
         # Make physical space for physics engine
+        logger.info("Setup physics space...")
+        start = time.clock()
         self.phys_space = pymunk.Space()
         self.phys_space.damping = 0.001
+        end = time.clock()
+        logger.info("Done, {:.3f}s.".format(end - start))
 
         # Add entities to the world
         logger.info("Spawning enemies...")
+        start = time.clock()
         self.enemies = []
         for r in self.dungeon.enemy_rooms:
             for spawn in r.spawn_locations:
@@ -132,11 +168,14 @@ class GameWorld(World):
                 e = Enemy(self)
                 e.position.set(x, y)
                 self.enemies.append(e)
+        end = time.clock()
+        logger.info("Done, {:.3f}s.".format(end - start))
 
         logger.info("Generating wall rectangles...")
-        self.wall_rects = self.dungeon.generate_wall_grid()
+        start = time.clock()
+        wall_rects = self.dungeon.wall_rects
         self.walls = []
-        for w in self.wall_rects:
+        for w in wall_rects:
             p1, p2 = w
             x = (p1[0] * 32)
             y = (p1[1] * 32)
@@ -147,6 +186,8 @@ class GameWorld(World):
             wa.physbody = PhysBody(shape="square", width=w, height=h)
             wa.position.set(x, y)
             self.walls.append(wa)
+        end = time.clock()
+        logger.info("Done, {:.3f}s.".format(end - start))
 
         logger.info("Placing collidable items...")
         # self.collidable = []
@@ -162,8 +203,18 @@ class GameWorld(World):
         self.e = Enemy(self)
         self.e.position.set(self.p.position.x + 32, self.p.position.y)
         self.e.followtarget.who = self.p
+        # self.e.lightsource = LightSource()
 
         self.viewlines = []
+
+    def load_game(self):
+        pass
+
+    def save_game(self):
+        pass
+
+    def initialize(self):
+        pass
 
     def spawn_player(self, point=(0, 0)):
         self.p = Player(self)
@@ -242,10 +293,11 @@ class GameWorld(World):
     def update_ortho(self, w, h):
         lessen_w = int((w - (w / self.zoom_factor)) / 2)
         lessen_h = int(lessen_w * (h / w))
+        self.view_area = lessen_w, w - lessen_w, lessen_h, h - lessen_h
 
         glMatrixMode(gl.GL_PROJECTION)
         glLoadIdentity()
-        glOrtho(lessen_w, w - lessen_w, lessen_h, h - lessen_h, -1, 1)
+        glOrtho(*self.view_area, -1, 1)
         glMatrixMode(gl.GL_MODELVIEW)
         glLoadIdentity()
 
@@ -303,6 +355,16 @@ class GameWorld(World):
             else:
                 self.p.lightsource = LightSource()
 
+        if k == key.F8:
+            self.new_game(load=False)
+        if k == key.F9:
+            self.new_game(load=True)
+
+        if k == key.F11:
+            self.cfg["lighting_enabled"] = not self.cfg["lighting_enabled"]
+        if k == key.F12:
+            self.cfg["show_rays"] = not self.cfg["show_rays"]
+
         c = self.get_components(KeyboardControlled)
         e = None
         if c:
@@ -318,6 +380,35 @@ class GameWorld(World):
                 except KeyError:
                     # print("No ability defined for that key.")
                     pass
+
+    def start_systems(self):
+        self.add_system(InitializeEffectiveStatsSystem(self))
+        self.add_system(ApplyAttributeStatsSystem(self))
+        self.add_system(ApplyHPSystem(self))
+        self.add_system(ApplyStaminaSystem(self))
+        self.add_system(ApplyManaSystem(self))
+        self.add_system(ApplyBasicAttackSystem(self))
+        self.add_system(ApplyMovementSpeedSystem(self))
+        self.add_system(LevelUpSystem(self))
+        self.add_system(MobNamingSystem(self))
+        self.add_system(GlowBatchSystem(self))
+        self.add_system(SpriteBatchSystem(self))
+        self.add_system(InputMovementSystem(self))
+        self.add_system(HeadBobbingSystem(self))
+        self.add_system(MoveSystem(self))
+        self.add_system(FollowSystem(self))
+        self.add_system(PhysicsSystem(self))
+        self.add_system(TargetMobSystem(self))
+        self.add_system(StaticSpritePosSystem(self))
+        self.add_system(StaticGlowEffectPosSystem(self))
+        self.add_system(WindowPosSystem(self))
+        self.add_system(SpritePosSystem(self))
+        self.add_system(GlowPosSystem(self))
+        self.add_system(HideSpriteSystem(self))
+        self.add_system(PulseAnimationSystem(self))
+        self.add_system(CleanupClickSystem(self))
+        self.add_system(LightingSystem(self))
+        self.add_system(RenderSystem(self))
 
 
 class GameWindow(pyglet.window.Window):  # Main game window
@@ -361,32 +452,6 @@ if __name__ == "__main__":
 
     # Add systems to the world to be processed in that order.
     # appworld.add_system(KeyboardHandling(appworld))
-    appworld.add_system(InitializeEffectiveStatsSystem(appworld))
-    appworld.add_system(ApplyAttributeStatsSystem(appworld))
-    appworld.add_system(ApplyHPSystem(appworld))
-    appworld.add_system(ApplyStaminaSystem(appworld))
-    appworld.add_system(ApplyManaSystem(appworld))
-    appworld.add_system(ApplyBasicAttackSystem(appworld))
-    appworld.add_system(ApplyMovementSpeedSystem(appworld))
-    appworld.add_system(LevelUpSystem(appworld))
-    appworld.add_system(MobNamingSystem(appworld))
-    appworld.add_system(GlowBatchSystem(appworld))
-    appworld.add_system(SpriteBatchSystem(appworld))
-    appworld.add_system(InputMovementSystem(appworld))
-    appworld.add_system(HeadBobbingSystem(appworld))
-    appworld.add_system(MoveSystem(appworld))
-    appworld.add_system(FollowSystem(appworld))
-    appworld.add_system(PhysicsSystem(appworld))
-    appworld.add_system(TargetMobSystem(appworld))
-    appworld.add_system(StaticSpritePosSystem(appworld))
-    appworld.add_system(StaticGlowEffectPosSystem(appworld))
-    appworld.add_system(WindowPosSystem(appworld))
-    appworld.add_system(SpritePosSystem(appworld))
-    appworld.add_system(GlowPosSystem(appworld))
-    appworld.add_system(PulseAnimationSystem(appworld))
-    appworld.add_system(CleanupClickSystem(appworld))
-    appworld.add_system(LightingSystem(appworld))
-    appworld.add_system(RenderSystem(appworld))
 
     # Schedule the update function on the world to run every frame.
     pyglet.clock.schedule_interval(appworld.process, 1.0 / FPS)

@@ -5,6 +5,7 @@ from spanning_tree import get_connections
 import gridmancer
 import numpy as np
 from collections import Counter
+import jsonpickle   # For saving the dungeon
 
 
 class DungeonGenerator:
@@ -35,6 +36,8 @@ class DungeonGenerator:
         self.rooms = []
         self.corridors = []
         self.grid = []
+        self.walls = []
+        self.wall_rects = []
         self.startroom = None
         self.enemy_rooms = []
         self.collidable = []
@@ -202,9 +205,10 @@ class DungeonGenerator:
 
         self.grid = self.get_all_rects()
         self.generate_walls()
+        self.generate_wall_grid()
 
         self.logger.info(
-            "Done, {0} rooms added.".format(
+            "{0} rooms added.".format(
                 len(self.rooms)
             )
         )
@@ -280,13 +284,14 @@ class DungeonGenerator:
 
         # print(array)
         array, rect_count = gridmancer.grid_reduce(grid=array)
+        # self.logger.info("Reduced walls to minimum amount of rectangles.")
         # print("--------")
         # print(array)
         minimal_grid = np.array(array)
         rects = []
         for i in range(rect_count):
             rects.append(np.asarray(np.where(minimal_grid == i + 1)).T.tolist())
-
+        # self.logger.info("Creating rectangles of new array.")
         # print(rect_count, len(rects))
         final_sets = []
         for r in rects:
@@ -296,7 +301,7 @@ class DungeonGenerator:
                     (r[-1][1], r[-1][0])
                 ]
             )
-        return final_sets
+        self.wall_rects = final_sets
 
         # print(minimal_grid)
         # return minimal_grid
@@ -317,10 +322,6 @@ class DungeonGenerator:
         else:
             self.logger.debug("Room not suitable for pillars.")
         return p
-
-    def flush(self):
-        self.rooms = []
-        self.corridors = []
 
     def connect_rooms(self):
         roomcenters = []
@@ -380,6 +381,41 @@ class DungeonGenerator:
                 attempts = 0
                 self.rooms.append(newroom)
                 i += 1
+
+    def flush(self):
+        self.rooms = []
+        self.corridors = []
+
+    def save(self, target):
+        dungeonstate = dict()
+        dungeonstate["rooms"] = self.rooms
+        dungeonstate["walls"] = self.walls
+        dungeonstate["wall_rects"] = self.wall_rects
+        dungeonstate["corridors"] = self.corridors
+        dungeonstate["startroom"] = self.startroom
+        dungeonstate["grid"] = self.grid
+        dungeonstate["enemy_rooms"] = self.enemy_rooms
+        dungeonstate["collidable"] = self.collidable
+        dungeonstate["pillars"] = self.pillars
+        dungeonstate["collidable_objects"] = self.collidable_objects
+
+        with open(target, 'w') as savegame:
+            savegame.write(jsonpickle.encode(dungeonstate))
+
+    def load(self, target):
+        with open(target, 'r') as savegame:
+            dungeonstate = jsonpickle.decode(savegame.read())
+
+        self.rooms = dungeonstate["rooms"]
+        self.walls = dungeonstate["walls"]
+        self.wall_rects = dungeonstate["wall_rects"]
+        self.corridors = dungeonstate["corridors"]
+        self.startroom = dungeonstate["startroom"]
+        self.grid = dungeonstate["grid"]
+        self.enemy_rooms = dungeonstate["enemy_rooms"]
+        self.collidable = dungeonstate["collidable"]
+        self.pillars = dungeonstate["pillars"]
+        self.collidable_objects = dungeonstate["collidable_objects"]
 
 
 class Room:

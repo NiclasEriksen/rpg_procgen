@@ -10,29 +10,6 @@ Take the challenge by yourself on the following link:
     http://codecombat.com/play/level/gridmancer
 '''
 
-GRID_CODECOMBAT = [
-    [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-    [-1, -1, -1, -1,  0,  0,  0,  0,  0, -1,  0,  0,  0, -1,  0,  0, -1, -1, -1,  0],
-    [ 0,  0,  0,  0,  0,  0,  0,  0,  0, -1,  0,  0,  0, -1,  0,  0,  0, -1, -1,  0],
-    [ 0,  0,  0,  0,  0,  0,  0,  0,  0, -1,  0,  0,  0, -1,  0,  0,  0, -1, -1,  0],
-    [ 0,  0,  0,  0,  0,  0, -1, -1, -1, -1, -1, -1, -1, -1,  0,  0,  0, -1, -1,  0],
-    [ 0,  0, -1,  0,  0,  0,  0, -1, -1, -1,  0,  0, -1, -1, -1,  0,  0, -1, -1,  0],
-    [ 0,  0, -1,  0,  0,  0,  0, -1, -1, -1,  0,  0, -1, -1, -1,  0,  0, -1, -1,  0],
-    [ 0, -1, -1,  0,  0,  0,  0, -1, -1, -1,  0,  0, -1, -1, -1,  0,  0, -1, -1,  0],
-    [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  0],
-    [-1, -1,  0,  0,  0,  0,  0, -1, -1,  0,  0,  0,  0,  0,  0, -1, -1, -1, -1,  0],
-    [-1, -1,  0,  0,  0,  0,  0, -1,  0,  0,  0,  0,  0,  0,  0, -1, -1, -1, -1,  0],
-    [-1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, -1, -1, -1, -1,  0],
-    [ 0,  0,  0,  0, -1,  0,  0,  0,  0,  0,  0, -1, -1,  0,  0, -1, -1, -1, -1,  0],
-    [ 0,  0,  0,  0, -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, -1, -1, -1, -1,  0],
-    [ 0,  0,  0, -1, -1, -1, -1, -1,  0,  0,  0,  0,  0,  0,  0, -1, -1, -1, -1,  0],
-    [ 0,  0,  0, -1,  0,  0,  0, -1,  0,  0,  0,  0,  0,  0,  0, -1, -1, -1,  0,  0],
-    [ 0,  0,  0, -1,  0,  0,  0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  0,  0],
-    [-1, -1, -1, -1,  0,  0,  0, -1, -1, -1, -1,  0,  0, -1, -1, -1, -1,  0,  0,  0],
-    [-1, -1, -1, -1,  0,  0, -1, -1, -1,  0,  0,  0,  0,  0,  0,  0, -1,  0,  0,  0],
-    [-1, -1, -1, -1,  0,  0,  0, -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0]
-        ]
-
 
 def copy_grid(grid):
     '''Copy a grid to a new grid (for code readability)'''
@@ -131,12 +108,17 @@ def get_rectangles(grid, pos):
 
 def rec_gridmancer(grid, rec_nb, rec_nb_min):
     '''New recursive tree explorer'''
+    global FINALGRID
+    if FINALGRID:
+        return rec_nb_min
     start_pos = get_start_pos(grid)
     if not start_pos:
+        global RECTCOUNT
         rec_nb_min = rec_nb
+        # print(rec_nb)
         # print('New minimal solution found for %i' % rec_nb_min)
-        global FINALGRID
         FINALGRID = grid
+        RECTCOUNT = rec_nb_min
         return rec_nb_min
     rec_nb += 1
     if rec_nb >= rec_nb_min:
@@ -149,15 +131,18 @@ def rec_gridmancer(grid, rec_nb, rec_nb_min):
 
 
 FINALGRID = []
+RECTCOUNT = 0
 
 
-def grid_reduce(grid=GRID_CODECOMBAT):
+def grid_reduce(grid):
     '''Where everything starts'''
     global FINALGRID
+    FINALGRID = []
     grid_start = grid
     big_max = len(grid_start) * len(grid_start[0])
-    c = rec_gridmancer(grid_start, 0, big_max)
-    return(FINALGRID, c)
+    while not FINALGRID:
+        rec_gridmancer(grid_start, 0, big_max)
+    return(FINALGRID, RECTCOUNT)
 
 if __name__ == '__main__':
     print(grid_reduce())

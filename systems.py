@@ -8,7 +8,7 @@ from pymunk import BB
 from pymunk import Circle as pymunk_circle
 from pymunk import Poly as pymunk_poly
 from pymunk import moment_for_circle
-from functions import get_dist, get_midpoint, rotate2d, get_angle, smooth_in_out
+from functions import get_dist, get_angle, smooth_in_out
 import math
 
 
@@ -31,13 +31,14 @@ class RenderSystem(System):
         self.componenttypes = (Sprite,)
 
     def process(self, world, components):
+        light = world.cfg["lighting_enabled"]
         glClearColor(0.2, 0.2, 0.2, 1)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadIdentity()
         glLoadIdentity()
 
-        wl = world.viewlines
-        if wl:
+        if light:
+            wl = world.viewlines
             glEnable(GL_STENCIL_TEST)
             glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE)
             glDepthMask(GL_FALSE)
@@ -110,7 +111,8 @@ class RenderSystem(System):
         glBlendFunc(
             GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA
         )
-        glDisable(GL_STENCIL_TEST)
+        if light:
+            glDisable(GL_STENCIL_TEST)
 
         # shader.bind()
         for s in components:
@@ -118,39 +120,41 @@ class RenderSystem(System):
                 s.sprite.draw()
         for k, v in world.batches.items():
             if k == "enemies":
-                if wl:
+                if light:
                     glEnable(GL_STENCIL_TEST)
                     glStencilFunc(GL_EQUAL, 1, 0xFF)
                 v.draw()
-                if wl:
+                if light:
                     glDisable(GL_STENCIL_TEST)
             else:
                 v.draw()
         # glUseProgram(0)
 
-        if wl:
+        if light:
             glEnable(GL_STENCIL_TEST)
             glStencilFunc(GL_EQUAL, 0, 0xFF)
-        glColor4f(0.1, 0.1, 0.1, 0.8)
-        pyglet.graphics.draw(
-            4, GL_QUADS,
-            ('v2f', [
-                0, 0, 1600, 0, 1600, 1600, 0, 1600
-            ])
-        )
+            glColor4f(0.15, 0.10, 0.05, 0.8)
+            x1, x2, y1, y2 = world.view_area
+            pyglet.graphics.draw(
+                4, GL_QUADS,
+                ('v2f', [
+                    x1, y1, x2, y1, x2, y2, x1, y2
+                ])
+            )
 
-        glDisable(GL_STENCIL_TEST)
-        # glColor4f(1, 1, 1, 1.)
-        # for l in wl:
-        #     pyglet.graphics.draw(
-        #         2, GL_LINES,
-        #         ('v2i', (
-        #             int(l.p1[0]) + int(world.window.offset_x),
-        #             int(l.p1[1]) + int(world.window.offset_y),
-        #             int(l.p2[0]) + int(world.window.offset_x),
-        #             int(l.p2[1]) + int(world.window.offset_y)
-        #         ))
-        #     )
+            glDisable(GL_STENCIL_TEST)
+            if world.cfg["show_rays"]:
+                glColor4f(1, 1, 1, 0.4)
+                for l in wl:
+                    pyglet.graphics.draw(
+                        2, GL_LINES,
+                        ('v2i', (
+                            int(l.p1[0]) + int(world.window.offset_x),
+                            int(l.p1[1]) + int(world.window.offset_y),
+                            int(l.p2[0]) + int(world.window.offset_x),
+                            int(l.p2[1]) + int(world.window.offset_y)
+                        ))
+                    )
         glDisable(GL_BLEND)
 
 
@@ -191,6 +195,29 @@ class GlowPosSystem(Applicator):
                 g.sprite.y = s.sprite.y
                 g.sprite.image.anchor_x = s.sprite.image.anchor_x
                 g.sprite.image.anchor_y = s.sprite.image.anchor_y
+
+
+class HideSpriteSystem(Applicator):
+    def __init__(self, world):
+        self.is_applicator = True
+        self.componenttypes = (Sprite, WindowPosition)
+
+    def process(self, world, sets):
+        w_min, w_max, h_min, h_max = world.view_area
+        for s, wp in sets:
+            if (
+                wp.x + s.sprite.width < w_min or
+                wp.y + s.sprite.height < h_min or
+                wp.x - s.sprite.width > w_max or
+                wp.y - s.sprite.height > h_max
+            ):
+                if s.sprite.visible:
+                    # print("Hidden")
+                    s.sprite.visible = False
+            else:
+                if not s.sprite.visible:
+                    # print("Shown")
+                    s.sprite.visible = True
 
 
 class StaticSpritePosSystem(Applicator):
@@ -604,26 +631,6 @@ class LightingSystem(System):
 
     def create_midpoints(self, bb):
         midpoints = []
-        # midpoints.append(
-        #     get_midpoint(
-        #         (bb.left, bb.top), (bb.left, bb.bottom)
-        #     )
-        # )
-        # midpoints.append(
-        #     get_midpoint(
-        #         (bb.left, bb.top), (bb.right, bb.top)
-        #     )
-        # )
-        # midpoints.append(
-        #     get_midpoint(
-        #         (bb.right, bb.top), (bb.right, bb.bottom)
-        #     )
-        # )
-        # midpoints.append(
-        #     get_midpoint(
-        #         (bb.left, bb.bottom), (bb.right, bb.bottom)
-        #     )
-        # )
         midpoints.append((bb.left, bb.bottom))
         midpoints.append((bb.left, bb.top))
         midpoints.append((bb.right, bb.top))
@@ -674,59 +681,46 @@ class LightingSystem(System):
         return collisions
 
     def process(self, world, sets):
-        dist = 520
+        dist = 650
         world.viewlines = []
         midpoints = []
         collisions = []
-        #  world_corners = [(0, 0), (1200, 0), (1200, 1000), (0, 1000)]
-        # for wc in world_corners:
-        #     midpoints.append(wc)
 
-        # o = (0, 0)
-        # p = (10, 10)
-        # # a = get_angle(*o, *p)
-        # # print(a)
-        # p2 = rotate2d(0.1, p, o)
-        # p3 = rotate2d(-0.1, p, o)
-        # print(p2, p3)
-
-        for ls, pb in sets:
-            pos = (pb.body.position.x, pb.body.position.y)
-            bb = BB(
-                (pos[0] - dist),
-                (pos[1] - dist),
-                (pos[0] + dist),
-                (pos[1] + dist)
-            )
-            p_shapes = world.phys_space.bb_query(bb)
-            for s in pb.body.shapes:
-                s.group = 2
-                p_shapes.remove(s)
-            for s in p_shapes:
-                if not isinstance(s, pymunk_circle):
-                    if not s.group == 2:
-                        mp = self.create_midpoints(s.bb)
-                        for p in mp:
-                            midpoints.append(p)
-                else:
+        if world.cfg["lighting_enabled"]:
+            for ls, pb in sets:
+                pos = (pb.body.position.x, pb.body.position.y)
+                bb = BB(
+                    (pos[0] - dist),
+                    (pos[1] - dist),
+                    (pos[0] + dist),
+                    (pos[1] + dist)
+                )
+                p_shapes = world.phys_space.bb_query(bb)
+                for s in pb.body.shapes:
                     s.group = 2
-            for mp in midpoints:
-                collisions += self.cast_ray(world.phys_space, pos, mp)
-            # for mp in world_corners:
-            #     collisions += self.cast_ray(
-            #         world.phys_space, pos, mp, single=True
-            #     )
-            for s in pb.body.shapes:
-                s.group = 0
+                    p_shapes.remove(s)
+                for s in p_shapes:
+                    if not isinstance(s, pymunk_circle):
+                        if not s.group == 2:
+                            mp = self.create_midpoints(s.bb)
+                            for p in mp:
+                                midpoints.append(p)
+                    else:
+                        s.group = 2
+                for mp in midpoints:
+                    collisions += self.cast_ray(world.phys_space, pos, mp)
+                # for mp in world_corners:
+                #     collisions += self.cast_ray(
+                #         world.phys_space, pos, mp, single=True
+                #     )
+                for s in pb.body.shapes:
+                    s.group = 0
 
             for c in collisions:
                 world.viewlines.append(
                     Ray((pos[0], pos[1]), c)
                 )
             world.viewlines.sort(key=lambda r: r.angle, reverse=True)
-        # for ls, pos in sets:
-        # for s in p_shapes:
-        # print(collisions)
 
 
 class Ray:
