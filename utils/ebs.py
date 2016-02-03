@@ -11,6 +11,7 @@ environment.
 """
 import uuid
 import inspect
+import time
 
 from .compat import *
 
@@ -24,6 +25,42 @@ def isiterable(a):
         return True
     except TypeError:
         return False
+
+
+class TaskTimer(object):
+    def __init__(self, frequency=1., name="NONAME"):
+        self.freq = frequency
+        self.name = name
+        self.counter = 0
+        self.ratio = 0
+        self.t1 = 0
+        self.times = []
+
+    def update(self, dt, num=0):
+        if self.counter >= self.freq:
+            self.counter = 0
+            if len(self.times) > 0:
+                avg = float(sum(self.times)) / len(self.times)
+            else:
+                avg = float('nan')
+            self.ratio = avg / dt * 100
+            print(
+                "[{0}]".format(num),
+                "Avg:", "{0:.6f}".format(avg),
+                "dt:", "{0:.6f}".format(dt),
+                "ratio:", "{0:.2f}%".format(self.ratio),
+                "-->", self.name)
+            self.times = []
+            return True
+        else:
+            self.counter += dt
+            return False
+
+    def start(self):
+        self.t1 = time.time()
+
+    def stop(self):
+        self.times.append(time.time() - self.t1)
 
 
 class Entity(object):
@@ -61,8 +98,9 @@ class Entity(object):
         try:
             ctype = self._world._componenttypes[name]
         except KeyError:
-            raise AttributeError("object '%r' has no attribute '%r'" % \
-                (self.__class__.__name__, name))
+            return False
+            # raise AttributeError("object '%r' has no attribute '%r'" % \
+            #     (self.__class__.__name__, name))
         try:
             return self._world.components[ctype][self]
         except KeyError:
@@ -136,6 +174,9 @@ class World(object):
         self._systems = []
         self.components = {}
         self._componenttypes = {}
+
+        self.timer_enabled = True
+        self.timers = dict()
 
     def _system_is_valid(self, system):
         """Checks, if the passed object fulfills the requirements for being
@@ -242,10 +283,29 @@ class World(object):
 
     def process(self, *vars):
         """Processes all components within their corresponding systems."""
+        if hasattr(self, "dt"):
+            i = 0
+            r = 0
+            for k, v in self.timers.items():
+                upd = v.update(self.dt, num=i)
+                if upd:
+                    r += v.ratio
+                i += 1
+            if r >= 100:
+                print("FRAMEDROP! -> {0:.2f}%".format(r))
+            elif r:
+                print("Percentage of frame: {0:.2f}%".format(r))
         if vars:
             self.dt = vars[0]
         components = self.components
         for system in self._systems:
+            if self.timer_enabled:
+                if not type(system) == tuple:
+                    sysname = system.__class__.__name__
+                    if sysname not in self.timers:
+                        self.timers[sysname] = TaskTimer(name=sysname)
+                    else:
+                        self.timers[sysname].start()
             s_process = system.process
             if getattr(system, "is_applicator", False):
                 comps = self.combined_components(system.componenttypes)
@@ -257,6 +317,10 @@ class World(object):
                 else:
                     for ctype in system.componenttypes:
                         s_process(self, components[ctype].values())
+            if self.timer_enabled:
+                if not type(system) == tuple:
+                    if sysname in self.timers:
+                        self.timers[sysname].stop()
 
     @property
     def systems(self):

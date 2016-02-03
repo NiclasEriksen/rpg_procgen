@@ -75,7 +75,7 @@ class GameWorld(World):
         self.view_area = (
             0, self.window.width, 0, self.window.height
         )
-        self.zoom_factor = 1.
+        self.zoom_factor = 1.5
 
         # Create a keyboard input handler for pyglet window
         self.input_keys = pyglet.window.key.KeyStateHandler()
@@ -200,9 +200,9 @@ class GameWorld(World):
 
         logger.info("Spawning player...")
         self.spawn_player()
-        self.e = Enemy(self)
-        self.e.position.set(self.p.position.x + 32, self.p.position.y)
-        self.e.followtarget.who = self.p
+        # self.e = Enemy(self)
+        # self.e.position.set(self.p.position.x + 32, self.p.position.y)
+        # self.e.followtarget.who = self.p
         # self.e.lightsource = LightSource()
 
         self.viewlines = []
@@ -284,10 +284,25 @@ class GameWorld(World):
         return pyglet.event.EVENT_HANDLED
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
-        if scroll_y == 1 and self.zoom_factor < 5:
+        if scroll_y == 1 and self.zoom_factor < 0.25:
+            self.zoom_factor += 0.05
+        elif scroll_y == 1 and self.zoom_factor < 0.5:
+            self.zoom_factor += 0.125
+        elif scroll_y == 1 and self.zoom_factor < 1.5:
+            self.zoom_factor += 0.25
+        elif scroll_y == 1 and self.zoom_factor < 5:
             self.zoom_factor += 0.5
-        elif scroll_y == -1 and self.zoom_factor > 1:
+        elif scroll_y == -1 and self.zoom_factor > 1.5:
             self.zoom_factor -= 0.5
+        elif scroll_y == -1 and self.zoom_factor > 0.5:
+            self.zoom_factor -= 0.25
+        elif scroll_y == -1 and self.zoom_factor > 0.25:
+            self.zoom_factor -= 0.125
+        elif scroll_y == -1 and self.zoom_factor > 0.06:
+            self.zoom_factor -= 0.05
+        else:
+            return None
+        print("Zoom: ", self.zoom_factor, "x")
         self.update_ortho(self.window.width, self.window.height)
 
     def update_ortho(self, w, h):
@@ -328,16 +343,10 @@ class GameWorld(World):
 
             if e[0] == self.p:
                 delattr(self.p, "input")
-                self.e.input = Input()
-            elif e[0] == self.e:
-                delattr(self.e, "input")
-                self.p.input = Input()
-
-        if k == key.F3:
-            if getattr(self.e, "physbody"):
-                delattr(self.e, "physbody")
+                # self.e.input = Input()
             else:
-                self.e.physbody = PhysBody()
+                delattr(e[0], "input")
+                self.p.input = Input()
 
         if k == key.F4:
             if getattr(self.p, "staticposition"):
@@ -389,12 +398,20 @@ class GameWorld(World):
         self.add_system(ApplyManaSystem(self))
         self.add_system(ApplyBasicAttackSystem(self))
         self.add_system(ApplyMovementSpeedSystem(self))
+        self.add_system(AutoAttackSystem(self))
+        self.add_system(CheckDeadSystem(self))
+        self.add_system(CheckAttackTargetSystem(self))
+        self.add_system(CheckAutoAttackTargetSystem(self))
+        self.add_system(CheckFollowTargetSystem(self))
+        self.add_system(SearchTargetSystem(self))
+        self.add_system(AutoAttackInRangeSystem(self))
         self.add_system(LevelUpSystem(self))
         self.add_system(MobNamingSystem(self))
         self.add_system(GlowBatchSystem(self))
         self.add_system(SpriteBatchSystem(self))
         self.add_system(InputMovementSystem(self))
         self.add_system(HeadBobbingSystem(self))
+        self.add_system(AIBehaviorSystem(self))
         self.add_system(MoveSystem(self))
         self.add_system(FollowSystem(self))
         self.add_system(PhysicsSystem(self))

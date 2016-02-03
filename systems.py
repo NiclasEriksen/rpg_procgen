@@ -10,6 +10,8 @@ from pymunk import Poly as pymunk_poly
 from pymunk import moment_for_circle
 from functions import get_dist, get_angle, smooth_in_out
 import math
+from timer import Timer
+# import aistates
 
 
 class MoveSystem(System):
@@ -29,9 +31,73 @@ class MoveSystem(System):
 class RenderSystem(System):
     def __init__(self, world):
         self.componenttypes = (Sprite,)
+        # self.tt = TaskTimer()
 
+    def create_triangles(self, wl, ox, oy):
+        # ox, oy = world.window.offset_x, world.window.offset_y
+        vertices = []
+        for i, l in enumerate(wl):
+            x1, y1, x2, y2 = l
+            try:
+                vertices += [
+                    x1 + ox,
+                    y1 + oy,
+                    x2 + ox,
+                    y2 + oy,
+                    wl[i+1][2] + ox,
+                    wl[i+1][3] + oy,
+                ]
+            except IndexError:
+                vertices += [
+                    x1 + ox,
+                    y1 + oy,
+                    x2 + ox,
+                    y2 + oy,
+                    wl[0][2] + ox,
+                    wl[0][3] + oy,
+                ]
+        return vertices
+
+    def create_fan(self, wl, ox, oy):
+        vertices = []
+        start = wl[0]
+        end = wl[1]
+        vertices += [start[0] + ox, start[1] + oy]
+        vertices += [start[2] + ox, start[3] + oy]
+        vertices += [end[2] + ox, end[3] + oy]
+        for l in wl[2:]:
+            vertices += [l[2] + ox, l[3] + oy]
+        vertices += [start[2] + ox, start[3] + oy]
+        return vertices
+
+    def draw_triangles(self, wl, ox, oy):
+        # print(len(self.create_fan(wl, ox, oy)))
+        vc = len(wl) * 2 + 4
+        # print(vc)
+        vertices_gl = (
+            GLfloat * vc
+        )(*self.create_fan(wl, ox, oy))
+
+        glEnableClientState(GL_VERTEX_ARRAY)
+        glVertexPointer(2, GL_FLOAT, 0, vertices_gl)
+        glColor3f(1, 1, 1)
+        glDrawArrays(GL_TRIANGLE_FAN, 0, vc // 2)
+
+    def draw_triangles_2(self, wl, ox, oy):
+        vc = len(wl) * 6
+        vertices_gl = (
+            GLfloat * vc
+        )(*self.create_triangles(wl, ox, oy))
+
+        glEnableClientState(GL_VERTEX_ARRAY)
+        glVertexPointer(2, GL_FLOAT, 0, vertices_gl)
+        glColor3f(1, 1, 1)
+        glDrawArrays(GL_TRIANGLES, 0, vc // 2)
+
+    # @profile
     def process(self, world, components):
         light = world.cfg["lighting_enabled"]
+        ox, oy = world.window.offset_x, world.window.offset_y
         glClearColor(0.2, 0.2, 0.2, 1)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadIdentity()
@@ -47,62 +113,13 @@ class RenderSystem(System):
             glStencilMask(0xFF)
             glClear(GL_STENCIL_BUFFER_BIT)
 
-            i = 0
-            end = len(world.viewlines) - 1
-            vertices = []
-            while i <= end:
-                if i != end:
-                    # vlist = pyglet.graphics.vertex_list(
-                    #     3, (
-                    #         'v2f',
-                    #         [
-                    #             wl[i].p1[0] + world.window.offset_x,
-                    #             wl[i].p1[1] + world.window.offset_y,
-                    #             wl[i].p2[0] + world.window.offset_x,
-                    #             wl[i].p2[1] + world.window.offset_y,
-                    #             wl[i+1].p2[0] + world.window.offset_x,
-                    #             wl[i+1].p2[1] + world.window.offset_y,
-                    #         ]
-                    #     )
-                    # )
-                    vertices += [
-                        wl[i].p1[0] + world.window.offset_x,
-                        wl[i].p1[1] + world.window.offset_y,
-                        wl[i].p2[0] + world.window.offset_x,
-                        wl[i].p2[1] + world.window.offset_y,
-                        wl[i+1].p2[0] + world.window.offset_x,
-                        wl[i+1].p2[1] + world.window.offset_y,
-                    ]
-                else:
-                    # vlist = pyglet.graphics.vertex_list(
-                    #     3, (
-                    #         'v2f',
-                    #         [
-                    #             wl[i].p1[0] + world.window.offset_x,
-                    #             wl[i].p1[1] + world.window.offset_y,
-                    #             wl[i].p2[0] + world.window.offset_x,
-                    #             wl[i].p2[1] + world.window.offset_y,
-                    #             wl[0].p2[0] + world.window.offset_x,
-                    #             wl[0].p2[1] + world.window.offset_y,
-                    #         ]
-                    #     )
-                    # )
-                    vertices += [
-                        wl[i].p1[0] + world.window.offset_x,
-                        wl[i].p1[1] + world.window.offset_y,
-                        wl[i].p2[0] + world.window.offset_x,
-                        wl[i].p2[1] + world.window.offset_y,
-                        wl[0].p2[0] + world.window.offset_x,
-                        wl[0].p2[1] + world.window.offset_y,
-                    ]
-                # vlist.draw(GL_TRIANGLES)
-                i += 1
+            # print(len(wl) * 6, len(vertices))
+            # vertices = self.create_triangles(wl, ox, oy)
+            # vertices_gl = (GLfloat * len(vertices))(*vertices)
 
-            vertices_gl = (GLfloat * len(vertices))(*vertices)
-            glEnableClientState(GL_VERTEX_ARRAY)
-            glVertexPointer(2, GL_FLOAT, 0, vertices_gl)
-            glColor3f(1, 1, 1)
-            glDrawArrays(GL_TRIANGLES, 0, len(vertices) // 2)
+            if wl:
+                # self.draw_triangles_2(wl, ox, oy)
+                self.draw_triangles(wl, ox, oy)
 
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE)
             glDepthMask(GL_TRUE)
@@ -130,6 +147,8 @@ class RenderSystem(System):
                 v.draw()
         # glUseProgram(0)
 
+        # self.draw_triangles()
+
         if light:
             glEnable(GL_STENCIL_TEST)
             glStencilFunc(GL_EQUAL, 0, 0xFF)
@@ -145,14 +164,16 @@ class RenderSystem(System):
             glDisable(GL_STENCIL_TEST)
             if world.cfg["show_rays"]:
                 glColor4f(1, 1, 1, 0.4)
+                iox, ioy = int(ox), int(oy)
                 for l in wl:
+                    x1, y1, x2, y2 = l
                     pyglet.graphics.draw(
                         2, GL_LINES,
                         ('v2i', (
-                            int(l.p1[0]) + int(world.window.offset_x),
-                            int(l.p1[1]) + int(world.window.offset_y),
-                            int(l.p2[0]) + int(world.window.offset_x),
-                            int(l.p2[1]) + int(world.window.offset_y)
+                            int(x1) + iox,
+                            int(y1) + ioy,
+                            int(x2) + iox,
+                            int(y2) + ioy
                         ))
                     )
         glDisable(GL_BLEND)
@@ -165,8 +186,9 @@ class MobNamingSystem(System):
 
     def process(self, world, sets):
         for n, *rest in sets:
-            if not n.name:
-                n.name = "Enemy"
+            pass
+            # if not n.name:
+            #     n.name = "Enemy"
 
 
 class SpritePosSystem(Applicator):
@@ -362,10 +384,12 @@ class PhysicsSystem(System):
     def __init__(self, world):
         self.is_applicator = True
         self.componenttypes = (PhysBody, Position)
+        self.interval = 0.1
+        self.interval_counter = 0
 
     def process(self, world, sets):
         for x in range(10):
-            world.phys_space.step(world.dt / 10)
+            world.phys_space.step(world.dt / 5)
         for b, p in sets:
             if not b.body:
                 b.body, shape, static = self.create_body(b, p)
@@ -380,19 +404,23 @@ class PhysicsSystem(System):
                     b.body.velocity.y = 0
 
         # Checks if there are any ghost bodies in the physics engine
-        if not (
-            len(world.get_components(PhysBody)) ==
-            len(world.phys_space.bodies)
-        ):
-            body_checklist = [b.body for b in world.get_components(PhysBody)]
-            self.cleanup_bodies(world, body_checklist)
+        if self.interval_counter >= self.interval:
+            self.interval_counter = 0
+            if not (
+                len(world.get_components(PhysBody)) ==
+                len(world.phys_space.bodies)
+            ):
+                body_checklist = [b.body for b in world.get_components(PhysBody)]
+                self.cleanup_bodies(world, body_checklist)
+        else:
+            self.interval_counter += world.dt
 
     def create_body(self, b, p):
         if b.shape == "circle":
             static = False
             inertia = moment_for_circle(b.mass, 0, b.width / 2, (0, 0))
             body = pymunk_body(b.mass, inertia)
-            body.position = (p.x, p.y)
+            body.position = (p.x + 0.001, p.y + 0.001)
             shape = pymunk_circle(body, b.width / 2, (0, 0))
             shape.elasticity = 0.2
             shape.group = 0
@@ -553,6 +581,146 @@ class ApplyBasicAttackSystem(System):
     def process(self, world, sets):
         for es, ba in sets:
             ba.dmg = es.type["dmg"]
+            ba.spd = es.type["aspd"]
+
+
+class CheckDeadSystem(System):
+    def __init__(self, world):
+        self.is_applicator = True
+        self.componenttypes = (HP,)
+
+    def process(self, world, sets):
+        for hp, *rest in sets:
+            if hp.value <= 0:
+                p = world.get_entities(hp)
+                print("Killed! {0}".format(p))
+                world.delete_entities(p)
+
+
+class CheckAttackTargetSystem(System):
+    def __init__(self, world):
+        self.is_applicator = True
+        self.componenttypes = (AttackTarget,)
+
+    def process(self, world, sets):
+        for at, *rest in sets:
+            if at.who not in world.entities:
+                o = world.get_entities(at)[0]
+                delattr(o, "attacktarget")
+
+
+class CheckAutoAttackTargetSystem(System):
+    def __init__(self, world):
+        self.is_applicator = True
+        self.componenttypes = (AutoAttackTarget,)
+
+    def process(self, world, sets):
+        for at, *rest in sets:
+            if at.who not in world.entities:
+                o = world.get_entities(at)[0]
+                delattr(o, "autoattacktarget")
+
+
+class CheckFollowTargetSystem(System):
+    def __init__(self, world):
+        self.is_applicator = True
+        self.componenttypes = (FollowTarget,)
+
+    def process(self, world, sets):
+        for ft, *rest in sets:
+            if ft.who not in world.entities:
+                o = world.get_entities(ft)[0]
+                delattr(o, "followtarget")
+
+
+class AutoAttackInRangeSystem(System):
+    def __init__(self, world):
+        self.is_applicator = True
+        self.componenttypes = (AttackTarget,)
+
+    def process(self, world, sets):
+        for at, *rest in sets:
+            e = world.get_entities(at)[0]
+            dist = get_dist(
+                e.position.x, e.position.y,
+                at.who.position.x, at.who.position.y
+            )
+            if getattr(e, "autoattacktarget"):
+                if dist > 32:
+                    delattr(e, "autoattacktarget")
+            elif dist <= 32:
+                e.autoattacktarget = AutoAttackTarget(target=at.who)
+
+
+class SearchTargetSystem(System):
+    def __init__(self, world):
+        self.is_applicator = True
+        self.componenttypes = (SearchingTarget, Allegiance)
+        self.interval = 0.25
+        self.interval_counter = 0
+
+    def process(self, world, sets):
+        if self.interval_counter >= self.interval:
+            # print("Now!")
+            self.interval_counter = 0
+            for st, a in sets:
+                o = world.get_entities(st)[0]
+                pos = getattr(o, "physbody")
+                if pos:
+                    if pos.body:
+                        p1 = pos.body.position.x, pos.body.position.y
+                        for tpos, ta in world.combined_components(
+                            (PhysBody, Allegiance)
+                        ):
+                            if not ta.value == a.value:
+                                if tpos.body:
+                                    p2 = (
+                                        tpos.body.position.x,
+                                        tpos.body.position.y
+                                    )
+                                    if get_dist(
+                                        *p1, *p2
+                                    ) <= 150:
+                                        for s in pos.body.shapes:
+                                            pos_old = s.group
+                                            s.group = 2
+                                        for s in tpos.body.shapes:
+                                            tpos_old = s.group
+                                            s.group = 2
+
+                                        ps = world.phys_space
+                                        c = ps.segment_query_first(
+                                            p1, p2, group=2
+                                        )
+                                        for s in pos.body.shapes:
+                                            s.group = pos_old
+                                        for s in tpos.body.shapes:
+                                            s.group = tpos_old
+                                        # print(c)
+                                        if not c:
+                                            t = world.get_entities(tpos)[0]
+                                            o.attacktarget = AttackTarget(t)
+                                            delattr(o, "searchingtarget")
+                                            print("Found target!")
+        else:
+            self.interval_counter += world.dt
+
+
+class AutoAttackSystem(System):
+    def __init__(self, world):
+        self.is_applicator = True
+        self.componenttypes = (BasicAttack, AutoAttackTarget)
+
+    def process(self, world, sets):
+        for ba, aat in sets:
+            if ba.cd <= 0:
+                if aat.who:
+                    if hasattr(aat.who, "hp"):
+                        aat.who.hp.value -= ba.dmg
+                        print(aat.who.hp.value)
+                        ba.cd = 3 - 3 / 100 * ba.spd
+            else:
+                ba.cd -= world.dt
 
 
 class ApplyMovementSpeedSystem(System):
@@ -628,99 +796,117 @@ class LightingSystem(System):
     def __init__(self, world):
         self.is_applicator = True
         self.componenttypes = (LightSource, PhysBody)
+        self.skipframes = 1
+        self.counter = 0
+        self.old_pos = (0, 0)
 
-    def create_midpoints(self, bb):
-        midpoints = []
-        midpoints.append((bb.left, bb.bottom))
-        midpoints.append((bb.left, bb.top))
-        midpoints.append((bb.right, bb.top))
-        midpoints.append((bb.right, bb.bottom))
-        return midpoints
+    # @profile
+    def create_midpoints(self, shapes):
+        l = []
+        for sd in shapes:
+            s = sd["shape"]
+            if not isinstance(s, pymunk_circle):
+                if not s.group == 2:
+                    l += [
+                        (s.bb.left, s.bb.bottom),
+                        (s.bb.left, s.bb.top),
+                        (s.bb.right, s.bb.top),
+                        (s.bb.right, s.bb.bottom)
+                    ]
+            else:
+                s.group = 2
+        return l
 
     def move_in_angle(self, a, p, d):
-        deltax = d*math.cos(a)
-        deltay = d*math.sin(a)
-        return p[0] + deltax, p[1] + deltay
+        return p[0] + d*math.cos(a), p[1] + d*math.sin(a)
 
-    def cast_ray(self, phys_space, origin, target, single=False):
+    def cast_ray(self, phys_space, origin, targets, single=False):
         collisions = []
         view_dist = 500
         a_offset = 0.00001
         col_group = 2
-        a = -get_angle(*origin, *target)
-        c1p = self.move_in_angle(a, origin, view_dist)
-        c1 = phys_space.segment_query_first(
-            origin, c1p, group=col_group
-        )
-        if c1:
-            hp = c1.get_hit_point()
-            collisions.append((hp.x, hp.y))
-        else:
-            collisions.append((c1p[0], c1p[1]))
-        if not single:
-            c2p = self.move_in_angle(a - a_offset, origin, view_dist)
-            # print(pos, mp, c2p)
-            c2 = phys_space.segment_query_first(
-                origin, c2p, group=col_group
+        for target in targets:
+            a = -get_angle(*origin, *target)
+            c1p = self.move_in_angle(a, origin, view_dist)
+            c1 = phys_space.segment_query_first(
+                origin, c1p, group=col_group
             )
-            c3p = self.move_in_angle(a + a_offset, origin, view_dist)
-            c3 = phys_space.segment_query_first(
-                origin, c3p, group=col_group
-            )
-            if c2:
-                hp = c2.get_hit_point()
-                collisions.append((hp.x, hp.y))
+            if c1:
+                hp = c1.get_hit_point()
+                collisions.append((hp.x, hp.y, a))
             else:
-                collisions.append((c2p[0], c2p[1]))
-            if c3:
-                hp = c3.get_hit_point()
-                collisions.append((hp.x, hp.y))
-            else:
-                collisions.append((c3p[0], c3p[1]))
+                collisions.append((c1p[0], c1p[1], a))
+            if not single:
+                a2 = a - a_offset
+                c2p = self.move_in_angle(a2, origin, view_dist)
+                # print(pos, mp, c2p)
+                c2 = phys_space.segment_query_first(
+                    origin, c2p, group=col_group
+                )
+                a3 = a + a_offset
+                c3p = self.move_in_angle(a3, origin, view_dist)
+                c3 = phys_space.segment_query_first(
+                    origin, c3p, group=col_group
+                )
+                if c2:
+                    hp = c2.get_hit_point()
+                    collisions.append((hp.x, hp.y, a2))
+                else:
+                    collisions.append((*c2p, a2))
+                if c3:
+                    hp = c3.get_hit_point()
+                    collisions.append((hp.x, hp.y, a3))
+                else:
+                    collisions.append((*c3p, a3))
 
         return collisions
 
     def process(self, world, sets):
-        dist = 650
-        world.viewlines = []
-        midpoints = []
-        collisions = []
+        if self.counter < self.skipframes:
+            self.counter += 1
+        else:
+            self.counter = 0
+            dist = 600
+            # world.viewlines = []
+            midpoints = []
+            collisions = []
 
-        if world.cfg["lighting_enabled"]:
-            for ls, pb in sets:
-                pos = (pb.body.position.x, pb.body.position.y)
-                bb = BB(
-                    (pos[0] - dist),
-                    (pos[1] - dist),
-                    (pos[0] + dist),
-                    (pos[1] + dist)
-                )
-                p_shapes = world.phys_space.bb_query(bb)
-                for s in pb.body.shapes:
-                    s.group = 2
-                    p_shapes.remove(s)
-                for s in p_shapes:
-                    if not isinstance(s, pymunk_circle):
-                        if not s.group == 2:
-                            mp = self.create_midpoints(s.bb)
-                            for p in mp:
-                                midpoints.append(p)
+            if world.cfg["lighting_enabled"]:
+                for ls, pb in sets:
+                    pos = (pb.body.position.x, pb.body.position.y)
+                    if pos == self.old_pos:
+                        # print("OLD")
+                        continue
                     else:
-                        s.group = 2
-                for mp in midpoints:
-                    collisions += self.cast_ray(world.phys_space, pos, mp)
-                # for mp in world_corners:
-                #     collisions += self.cast_ray(
-                #         world.phys_space, pos, mp, single=True
-                #     )
-                for s in pb.body.shapes:
-                    s.group = 0
+                        world.viewlines = []
+                        self.old_pos = pos
 
-            for c in collisions:
-                world.viewlines.append(
-                    Ray((pos[0], pos[1]), c)
-                )
-            world.viewlines.sort(key=lambda r: r.angle, reverse=True)
+                    midpoints = self.create_midpoints(
+                        world.phys_space.nearest_point_query(
+                            pos, dist, group=2
+                        )
+                    )
+
+                    collisions += self.cast_ray(
+                        world.phys_space, pos, midpoints
+                    )
+
+                    for s in pb.body.shapes:
+                        s.group = 0
+
+                if not world.viewlines:
+                    collisions.sort(key=lambda x: x[2], reverse=True)
+                    world.viewlines = [(*pos, c[0], c[1]) for c in collisions]
+
+
+class AIBehaviorSystem(System):
+    def __init__(self, world):
+        self.is_applicator = True
+        self.componenttypes = (AIBehavior,)
+
+    def process(self, world, sets):
+        for aib, *rest in sets:
+            aib.update()
 
 
 class Ray:

@@ -1,0 +1,212 @@
+{
+    "title": "A Behavior Tree",
+    "description": "",
+    "root": "d5c2aab5-bca7-446f-8462-ff85940f1a0c",
+    "display": {
+        "camera_x": 948,
+        "camera_y": 477,
+        "camera_z": 0.75,
+        "x": -816,
+        "y": -80
+    },
+    "properties": {},
+    "nodes": {
+        "1bcc62f4-f56f-4dc9-9fa9-16c778a71715": {
+            "id": "1bcc62f4-f56f-4dc9-9fa9-16c778a71715",
+            "name": "HasTarget",
+            "title": "HasTarget",
+            "description": "",
+            "display": {
+                "x": 16,
+                "y": -272
+            },
+            "parameters": {},
+            "properties": {}
+        },
+        "dc43aa31-ac48-4397-87fe-fef967ccb771": {
+            "id": "dc43aa31-ac48-4397-87fe-fef967ccb771",
+            "name": "Sequence",
+            "title": "Sequence",
+            "description": "targ_seq",
+            "display": {
+                "x": -400,
+                "y": -176
+            },
+            "parameters": {},
+            "properties": {},
+            "children": [
+                "dcc38810-0155-4423-b2df-71b9feabfcad",
+                "607c24ce-7565-4619-85f2-711da2c5d60d"
+            ]
+        },
+        "dcc38810-0155-4423-b2df-71b9feabfcad": {
+            "id": "dcc38810-0155-4423-b2df-71b9feabfcad",
+            "name": "Selector",
+            "title": "Selector",
+            "description": "gettarget",
+            "display": {
+                "x": -192,
+                "y": -240
+            },
+            "parameters": {},
+            "properties": {},
+            "children": [
+                "1bcc62f4-f56f-4dc9-9fa9-16c778a71715",
+                "34a2e9a6-2da4-4ff8-8020-3f67d8965327"
+            ]
+        },
+        "34a2e9a6-2da4-4ff8-8020-3f67d8965327": {
+            "id": "34a2e9a6-2da4-4ff8-8020-3f67d8965327",
+            "name": "FindTarget",
+            "title": "FindTarget",
+            "description": "",
+            "display": {
+                "x": 16,
+                "y": -208
+            },
+            "parameters": {},
+            "properties": {}
+        },
+        "3455919c-dc7b-4f82-89d4-54a0bc7f874c": {
+            "id": "3455919c-dc7b-4f82-89d4-54a0bc7f874c",
+            "name": "MoveToTarget",
+            "title": "MoveToTarget",
+            "description": "",
+            "display": {
+                "x": 16,
+                "y": -80
+            },
+            "parameters": {},
+            "properties": {}
+        },
+        "0ff6127d-1ea7-468b-888c-8de83f4318ba": {
+            "id": "0ff6127d-1ea7-468b-888c-8de83f4318ba",
+            "name": "TargetInRange",
+            "title": "TargetInRange",
+            "description": "",
+            "display": {
+                "x": 224,
+                "y": -144
+            },
+            "parameters": {},
+            "properties": {}
+        },
+        "607c24ce-7565-4619-85f2-711da2c5d60d": {
+            "id": "607c24ce-7565-4619-85f2-711da2c5d60d",
+            "name": "Sequence",
+            "title": "Sequence",
+            "description": "closeenough",
+            "display": {
+                "x": -192,
+                "y": -112
+            },
+            "parameters": {},
+            "properties": {},
+            "children": [
+                "793000e3-fbc0-4804-9741-18cadb0894d8",
+                "3455919c-dc7b-4f82-89d4-54a0bc7f874c"
+            ]
+        },
+        "793000e3-fbc0-4804-9741-18cadb0894d8": {
+            "id": "793000e3-fbc0-4804-9741-18cadb0894d8",
+            "name": "Inverter",
+            "title": "Inverter",
+            "description": "",
+            "display": {
+                "x": 16,
+                "y": -144
+            },
+            "parameters": {},
+            "properties": {},
+            "child": "0ff6127d-1ea7-468b-888c-8de83f4318ba"
+        },
+        "d5c2aab5-bca7-446f-8462-ff85940f1a0c": {
+            "id": "d5c2aab5-bca7-446f-8462-ff85940f1a0c",
+            "name": "Selector",
+            "title": "Selector",
+            "description": "",
+            "display": {
+                "x": -608,
+                "y": -80
+            },
+            "parameters": {},
+            "properties": {},
+            "children": [
+                "dc43aa31-ac48-4397-87fe-fef967ccb771",
+                "715c9113-4c12-4ab9-9258-89204ad03968"
+            ]
+        },
+        "715c9113-4c12-4ab9-9258-89204ad03968": {
+            "id": "715c9113-4c12-4ab9-9258-89204ad03968",
+            "name": "Sequence",
+            "title": "Sequence",
+            "description": "",
+            "display": {
+                "x": -400,
+                "y": 16
+            },
+            "parameters": {},
+            "properties": {},
+            "children": [
+                "2faf69e1-b888-4aec-a794-e109ad3aa618",
+                "9176046b-ba3b-47d0-8217-54678b646776"
+            ]
+        },
+        "2faf69e1-b888-4aec-a794-e109ad3aa618": {
+            "id": "2faf69e1-b888-4aec-a794-e109ad3aa618",
+            "name": "MoveToTarget",
+            "title": "MoveToTarget",
+            "description": "",
+            "display": {
+                "x": -192,
+                "y": -16
+            },
+            "parameters": {},
+            "properties": {}
+        },
+        "9176046b-ba3b-47d0-8217-54678b646776": {
+            "id": "9176046b-ba3b-47d0-8217-54678b646776",
+            "name": "GetNewTarget",
+            "title": "GetNewTarget",
+            "description": "",
+            "display": {
+                "x": -192,
+                "y": 48
+            },
+            "parameters": {},
+            "properties": {}
+        }
+    },
+    "custom_nodes": [
+        {
+            "name": "HasTarget",
+            "title": "",
+            "category": "action"
+        },
+        {
+            "name": "FindTarget",
+            "title": "",
+            "category": "action"
+        },
+        {
+            "name": "TargetInRange",
+            "title": "",
+            "category": "action"
+        },
+        {
+            "name": "MoveToTarget",
+            "title": "",
+            "category": "action"
+        },
+        {
+            "name": "Selector",
+            "title": "",
+            "category": "composite"
+        },
+        {
+            "name": "GetNewTarget",
+            "title": "",
+            "category": "action"
+        }
+    ]
+}

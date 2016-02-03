@@ -1,4 +1,5 @@
 from components import *
+from ai_components import KillPlayer
 from utils.ebs import Entity
 
 
@@ -21,9 +22,12 @@ class Player(Entity):
         self.mousecontrolled = MouseControlled()
         self.keyboardcontrolled = KeyboardControlled()
 
+        self.allegiance = Allegiance()
+
         self.xp = XP()
         self.level = Level()
         self.hp = HP()
+        self.hp.value = 5
         self.stamina = Stamina()
         self.mana = Mana()
         self.attributes = Attributes()
@@ -65,12 +69,16 @@ class FG(Entity):
 
 class Enemy(Entity):
     def __init__(self, world):
-        self.charname = CharName()
+        self.charname = CharName(name="Enemy")
         self.windowposition = WindowPosition()
         self.physbody = PhysBody()
         self.position = Position()
         self.movement = Movement()
-        self.followtarget = FollowTarget()
+        self.allegiance = Allegiance(value=1)
+        # self.searchingtarget = SearchingTarget()
+        # self.followtarget = FollowTarget()
+        self.aibehavior = AIBehavior()
+        self.aibehavior.set(KillPlayer(self, world))
         self.sprite = Sprite(world.textures["enemy"])
         self.pulseanimation = PulseAnimation(self.sprite)
         self.batch = Batch("enemies")
@@ -80,6 +88,7 @@ class Enemy(Entity):
         self.basestats = BaseStats()
         self.effectivestats = EffectiveStats()
         self.activeeffects = ActiveEffects()
+        self.basicattack = BasicAttack()
 
-        self.autoattacktarget = AutoAttackTarget()
+        # self.autoattacktarget = AutoAttackTarget()
         self.lastattacker = LastAttacker()

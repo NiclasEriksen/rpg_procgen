@@ -1,10 +1,52 @@
 import pyglet.sprite
+from functions import get_dist
+import time
+
+# exec(open("ai_components.py").read(), globals())
+
+
+class TaskTimer(object):
+    def __init__(self, frequency=1.):
+        self.freq = frequency
+        self.counter = 0
+        self.t1 = 0
+        self.times = []
+
+    def update(self, dt):
+        if self.counter >= self.freq:
+            self.counter = 0
+            if len(self.times) > 0:
+                avg = float(sum(self.times)) / len(self.times)
+            else:
+                avg = float('nan')
+            print(avg)
+            self.times = []
+        else:
+            self.counter += dt
+
+    def start(self):
+        self.t1 = time.time()
+
+    def stop(self):
+        self.times.append(time.time() - self.t1)
 
 
 class Batch(object):
     def __init__(self, batchname):
         self.batch = batchname
         self.group = 0
+
+
+class AIState(object):
+    def __init__(self):
+        self.current = None
+
+    def set(self, state):
+        self.current = state
+
+    def get(self):
+        return self.current
+
 
 class Attributes(object):
     def __init__(self):
@@ -47,7 +89,7 @@ class BaseStats(object):
             "mana_max": 10,
             "armor": 0,
             "magic_def": 0,
-            "ms": 80,
+            "ms": 180,
             "dmg": 1,
             "aspd": 30,
             "arng": 40,
@@ -266,14 +308,29 @@ class Mana(object):
         self.max = amount
 
 
+class Allegiance(object):
+    def __init__(self, value=0):
+        self.value = value
+
+
 class LastAttacker(object):
     def __init__(self):
         self.who = None
 
 
 class AutoAttackTarget(object):
+    def __init__(self, target=None):
+        self.who = target
+
+
+class AttackTarget(object):
+    def __init__(self, t):
+        self.who = t
+
+
+class SearchingTarget(object):
     def __init__(self):
-        self.who = None
+        pass
 
 
 class FocusTarget(object):
@@ -294,6 +351,8 @@ class EffectTarget(object):
 class BasicAttack(object):
     def __init__(self):
         self.dmg = 1
+        self.cd = 0
+        self.spd = 0
         self.effects = None
 
 
@@ -306,3 +365,19 @@ class FollowTarget(object):
 class LightSource(object):
     def __init__(self):
         self.intensity = 100
+
+
+class AIBehavior(object):
+    def __init__(self):
+        self.current = None
+
+    def set(self, tree):
+        self.current = tree
+        # self.current.next()
+
+    def update(self):
+        if self.current:
+            r = self.current.run()
+            if r:
+                print("Done!")
+                self.current = None
